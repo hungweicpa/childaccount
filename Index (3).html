@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加州兒童儲蓄帳戶決策工具 v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#1c1c2e;
+  --ink-mid:#4a4a6a;
+  --ink-soft:#8888aa;
+  --bg:#f5f4ef;
+  --surface:#ffffff;
+  --green:#2d6a4f;
+  --green-mid:#40916c;
+  --green-light:#e8f5ee;
+  --green-dark:#1b4332;
+  --warn:#b5541a;
+  --warn-light:#fdf0e8;
+  --blue:#1d4e89;
+  --blue-light:#e8f0fa;
+  --gold:#9c6b00;
+  --gold-light:#fdf6e3;
+  --purple:#5c3d8f;
+  --purple-light:#f0ebfa;
+  --border:#e0dfd8;
+  --border-mid:#c8c7be;
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 2px 20px rgba(28,28,46,0.08);
+}
+
+body{font-family:'Noto Sans TC','Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+/* HERO */
+.hero{background:var(--ink);color:#fff;padding:52px 24px 44px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 0%,rgba(64,145,108,0.18) 0%,transparent 65%);pointer-events:none}
+.hero-tag{display:inline-block;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#7dd3a8;margin-bottom:14px}
+.hero h1{font-size:clamp(20px,4.5vw,36px);font-weight:700;line-height:1.25;letter-spacing:-.025em;margin-bottom:12px}
+.hero p{font-size:14.5px;color:rgba(255,255,255,.58);max-width:480px;margin:0 auto;line-height:1.75}
+
+/* DISCLAIMER */
+.disclaimer{background:var(--warn-light);border-bottom:1px solid #f0c9a8;padding:12px 20px;font-size:12px;color:var(--warn);line-height:1.65;text-align:center}
+
+/* MAIN */
+.main{max-width:660px;margin:0 auto;padding:28px 18px 72px}
+
+/* PHASE INDICATOR */
+.phase-bar{display:flex;gap:0;margin-bottom:28px;border-radius:99px;overflow:hidden;border:1px solid var(--border)}
+.phase-seg{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:500;color:var(--ink-soft);background:white;transition:all .25s;position:relative}
+.phase-seg.active{background:var(--ink);color:white}
+.phase-seg.done{background:var(--green-light);color:var(--green-mid)}
+.phase-seg:not(:last-child){border-right:1px solid var(--border)}
+
+/* QUESTION CARD */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:26px 26px 22px;box-shadow:var(--shadow);margin-bottom:14px;animation:slideIn .22s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.q-context{font-size:11px;font-weight:600;color:var(--green-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.q-text{font-size:16.5px;font-weight:700;color:var(--ink);line-height:1.5;margin-bottom:5px}
+.q-hint{font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:18px;padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--border-mid)}
+
+/* ALERT inside question */
+.q-alert{font-size:12.5px;line-height:1.65;padding:10px 13px;border-radius:var(--radius-sm);margin-bottom:18px;border-left:3px solid}
+.q-alert.warn{background:var(--warn-light);color:var(--warn);border-color:var(--warn)}
+.q-alert.info{background:var(--blue-light);color:var(--blue);border-color:var(--blue)}
+
+/* OPTIONS */
+.options{display:flex;flex-direction:column;gap:9px}
+.option{display:flex;align-items:flex-start;gap:13px;padding:13px 15px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:border-color .14s,background .14s;background:white}
+.option:hover{border-color:var(--green-mid);background:var(--green-light)}
+.option.selected{border-color:var(--green);background:var(--green-light)}
+.option.warn-opt{border-color:#f0c9a8}
+.option.warn-opt:hover,.option.warn-opt.selected{border-color:var(--warn);background:var(--warn-light)}
+.opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-mid);flex-shrink:0;margin-top:2px;transition:all .14s;position:relative}
+.option.selected .opt-radio{border-color:var(--green);background:var(--green)}
+.option.selected .opt-radio::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:white}
+.option.warn-opt.selected .opt-radio{border-color:var(--warn);background:var(--warn)}
+.opt-body{flex:1}
+.opt-label{font-size:14px;font-weight:500;color:var(--ink);line-height:1.45}
+.opt-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;line-height:1.5}
+
+/* EARLY EXIT CARD */
+.exit-card{background:white;border-radius:var(--radius);border:2px solid var(--border);padding:22px 22px 18px;margin-bottom:14px;animation:slideIn .22s ease}
+.exit-badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px}
+.exit-card .exit-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.exit-card .exit-body{font-size:13.5px;color:var(--ink-mid);line-height:1.75}
+.exit-card.green-exit{border-color:var(--green)}
+.exit-card.warn-exit{border-color:var(--warn)}
+
+/* NAV */
+.nav{display:flex;gap:10px;margin-top:18px}
+.btn{padding:12px 22px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s;border:none}
+.btn-primary{background:var(--ink);color:white;flex:1}
+.btn-primary:hover{background:#2d2d45}
+.btn-primary:disabled{background:var(--border);color:var(--ink-soft);cursor:not-allowed}
+.btn-back{background:transparent;color:var(--ink-mid);border:1.5px solid var(--border);padding:12px 16px}
+.btn-back:hover{border-color:var(--ink-mid);color:var(--ink)}
+.btn-outline{background:transparent;color:var(--ink-mid);border:1.5px solid var(--border);width:100%;padding:13px;margin-top:6px}
+.btn-outline:hover{border-color:var(--ink-mid);color:var(--ink)}
+
+/* RESULT */
+.result-hidden{display:none}
+
+.result-hero{text-align:center;padding:28px 0 20px}
+.result-emoji{font-size:38px;margin-bottom:10px}
+.result-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.result-sub{font-size:13.5px;color:var(--ink-soft);line-height:1.65}
+
+.section-label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em;margin:22px 0 10px}
+
+/* REC CARDS */
+.rec-card{border-radius:var(--radius);padding:20px 22px;margin-bottom:11px;border:2px solid}
+.rec-card.primary{border-color:var(--green);background:var(--green-light)}
+.rec-card.secondary{border-color:var(--border);background:white}
+.rec-card.caution{border-color:#f0c9a8;background:var(--warn-light)}
+.rec-card.info-card{border-color:#b8d0ee;background:var(--blue-light)}
+.rec-badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.badge-green{background:var(--green);color:white}
+.badge-gray{background:#d0cfc8;color:#5a5a72}
+.badge-warn{background:var(--warn);color:white}
+.badge-blue{background:var(--blue);color:white}
+.badge-gold{background:var(--gold);color:white}
+.rec-name{font-size:16.5px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.rec-body{font-size:13.5px;color:var(--ink-mid);line-height:1.75}
+
+/* FACTORS */
+.factors-card{background:white;border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;margin-bottom:11px}
+.factor-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.65;color:var(--ink-mid)}
+.factor-row:last-child{margin-bottom:0}
+.fdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.dot-g{background:var(--green)}
+.dot-w{background:var(--warn)}
+.dot-b{background:var(--blue)}
+.dot-gold{background:var(--gold)}
+.dot-p{background:var(--purple)}
+
+/* NEXT STEPS */
+.steps-card{background:var(--ink);color:white;border-radius:var(--radius);padding:22px 22px 18px;margin-bottom:11px}
+.steps-title{font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:14px}
+.step-row{display:flex;gap:14px;margin-bottom:13px;align-items:flex-start}
+.step-row:last-child{margin-bottom:0}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--green-mid);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-body{font-size:13px;line-height:1.65;color:rgba(255,255,255,.8)}
+.step-body a{color:#7dd3a8;text-decoration:none}
+.step-body strong{color:white;font-weight:500}
+
+/* CA NOTICE */
+.ca-notice{background:var(--gold-light);border:1px solid #e8d5a0;border-radius:var(--radius-sm);padding:13px 15px;font-size:12.5px;color:var(--gold);line-height:1.7;margin-bottom:11px}
+
+/* SEED HIGHLIGHT */
+.seed-box{background:var(--purple-light);border:1.5px solid #c4a8e8;border-radius:var(--radius-sm);padding:13px 15px;font-size:13px;color:var(--purple);line-height:1.7;margin-bottom:11px}
+
+/* AGE WARNING */
+.age-warn{background:var(--warn-light);border:1.5px solid #f0c9a8;border-radius:var(--radius-sm);padding:12px 15px;font-size:13px;color:var(--warn);line-height:1.65;margin-bottom:11px}
+
+.restart-btn{width:100%;padding:13px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--ink-soft);font-size:13.5px;font-weight:500;font-family:inherit;cursor:pointer;margin-top:4px;transition:all .15s}
+.restart-btn:hover{border-color:var(--ink-mid);color:var(--ink)}
+
+.comparison-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:2px}
+.comparison-table th{font-weight:500;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.comparison-table td{padding:9px 10px;border-bottom:.5px solid var(--border);vertical-align:top;line-height:1.55;color:var(--ink-mid)}
+.comparison-table tr:last-child td{border-bottom:none}
+.comparison-table td:first-child{color:var(--ink);font-weight:500;white-space:nowrap}
+.tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:500}
+.tag-g{background:var(--green-light);color:var(--green)}
+.tag-w{background:var(--warn-light);color:var(--warn)}
+.tag-gray{background:var(--bg);color:var(--ink-soft)}
+
+@media(max-width:480px){
+  .card,.rec-card,.factors-card,.steps-card{padding:18px 14px}
+  .hero{padding:36px 14px 30px}
+  .main{padding:20px 12px 56px}
+  .phase-seg{font-size:9.5px;padding:7px 2px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">加州居民 · 2026 年版</div>
+  <h1>孩子的錢，該怎麼存？</h1>
+  <p>Trump Account（530A）、529 計畫，根據您的家庭條件，找到真正適合的答案</p>
+</div>
+
+<div class="disclaimer">
+  ⚠ 本工具僅供參考，不構成法律或稅務建議。法規隨時可能更新，重要決策請諮詢持照財務顧問（CFP）或稅務師（CPA）。
+</div>
+
+<div class="main">
+  <div class="phase-bar" id="phaseBar">
+    <div class="phase-seg active" id="ph0">資格確認</div>
+    <div class="phase-seg" id="ph1">目標方向</div>
+    <div class="phase-seg" id="ph2">實務條件</div>
+    <div class="phase-seg" id="ph3">建議結果</div>
+  </div>
+
+  <div id="quizArea"></div>
+  <div id="resultArea" class="result-hidden"></div>
+</div>
+
+<script>
+// ─── QUESTION TREE ───────────────────────────────────────────────
+// Each node: id, phase(0-2), context, text, hint, alert?, options[]
+// option: value, label, sub?, warn?(bool), next(fn|string)
+
+const Q = {
+
+  // ── PHASE 0: 資格確認 ─────────────────────────
+  ssn: {
+    id:'ssn', phase:0,
+    context:'資格確認 · 第一關',
+    text:'孩子是否已取得社會安全號碼（SSN）？',
+    hint:'開設 Trump account 的法定前提是孩子在設立當年年底前未滿 18 歲，且已取得 SSN。',
+    options:[
+      {value:'yes', label:'是，已有 SSN', next:'child_age'},
+      {value:'applied', label:'申請中，還沒拿到', sub:'通常幾週內可取得', next:'ssn_pending'},
+      {value:'no', label:'否，尚未申請', next:'ssn_pending'},
+    ]
+  },
+
+  child_age: {
+    id:'child_age', phase:0,
+    context:'資格確認 · 第二關',
+    text:'孩子目前幾歲？',
+    hint:'Trump account 的複利優勢主要來自長期鎖定；孩子年齡越大，效益遞減。',
+    options:[
+      {value:'infant',  label:'0–2 歲（含新生兒）', sub:'Trump account 複利期最長，效益最大', next:'born_year'},
+      {value:'young',   label:'3–8 歲', next:'born_year'},
+      {value:'teen_early', label:'9–13 歲', sub:'距 18 歲尚有 5–9 年', next:'born_year'},
+      {value:'teen_late',  label:'14–17 歲', sub:'距 18 歲僅 1–4 年，效益有限', next:'born_year'},
+    ]
+  },
+
+  born_year: {
+    id:'born_year', phase:0,
+    context:'資格確認 · 第三關',
+    text:'孩子是否於 2025 年 1 月 1 日至 2028 年 12 月 31 日之間出生？',
+    hint:'此出生年份範圍決定孩子是否可能獲得政府一次性 $1,000 種子金試點補助。',
+    options:[
+      {value:'yes', label:'是，出生於 2025–2028 年', sub:'可能符合 $1,000 種子金資格', next:'existing_529'},
+      {value:'no',  label:'否，出生於 2025 年以前', sub:'仍可開設 Trump account，但無種子金', next:'existing_529'},
+    ]
+  },
+
+  // ── PHASE 1: 目標方向 ─────────────────────────
+  existing_529: {
+    id:'existing_529', phase:1,
+    context:'目標方向 · 現況盤點',
+    text:'您是否已為這個孩子開設 529（ScholarShare）計畫？',
+    hint:'若已有運作中的 529，Trump account 的角色會更清晰——主要是補充性的長期資產工具。',
+    options:[
+      {value:'yes_active',  label:'是，已有且持續在存', next:'primary_goal'},
+      {value:'yes_inactive', label:'有開戶但沒在存錢', next:'primary_goal'},
+      {value:'no', label:'尚未開設', next:'primary_goal'},
+    ]
+  },
+
+  primary_goal: {
+    id:'primary_goal', phase:1,
+    context:'目標方向 · 核心目的',
+    text:'您為孩子存錢，最主要的目的是什麼？',
+    hint:'這是最關鍵的問題。兩種帳戶在制度設計上針對不同目標，答案會大幅影響建議方向。',
+    options:[
+      {value:'edu',        label:'大學或 K-12 教育費用為主', sub:'學費、教材、住宿、學貸等', next:'budget'},
+      {value:'retirement', label:'替孩子建立長期退休資產', sub:'18 歲後讓孩子自行運用的財富', next:'budget'},
+      {value:'both',       label:'教育和長期資產都想兼顧', next:'budget'},
+      {value:'unsure',     label:'還不確定，先了解選項', next:'budget'},
+    ]
+  },
+
+  // ── PHASE 2: 實務條件 ─────────────────────────
+  budget: {
+    id:'budget', phase:2,
+    context:'實務條件 · 每年預算',
+    text:'您預計每年能為孩子投入多少儲蓄？',
+    hint:'Trump account 年上限為 $5,000；若預算充裕，可以兩種帳戶並用，不需要二選一。',
+    options:[
+      {value:'low',    label:'$1,000 以下', next:'flexibility'},
+      {value:'mid',    label:'$1,000–$5,000', next:'flexibility'},
+      {value:'high',   label:'$5,000 以上', sub:'可考慮兩者並用', next:'flexibility'},
+      {value:'unsure', label:'還不確定', next:'flexibility'},
+    ]
+  },
+
+  flexibility: {
+    id:'flexibility', phase:2,
+    context:'實務條件 · 流動性需求',
+    text:'孩子 18 歲以前，您是否可能需要動用這筆錢？',
+    hint:'Trump account 18 歲前幾乎完全無法提款，無例外情形不可動用。529 則可隨時用於合格教育支出。',
+    options:[
+      {value:'yes',    label:'有可能，希望保有彈性', sub:'例如 K-12 學費、臨時需要', warn:true, next:'fafsa'},
+      {value:'no',     label:'不需要，可以長期鎖定', next:'fafsa'},
+      {value:'unsure', label:'不確定，希望有備用選項', next:'fafsa'},
+    ]
+  },
+
+  fafsa: {
+    id:'fafsa', phase:2,
+    context:'實務條件 · 助學金規劃',
+    text:'您預計孩子未來會申請聯邦助學金（FAFSA）嗎？',
+    hint:'Trump account 18 歲前不計入 FAFSA 資產（屬退休帳戶）；但 18 歲後若提款，會計入「學生收入」，影響助學金最高達 50%。教育部尚未發布 Trump account 的 FAFSA 專屬指引。',
+    alert:{type:'info', text:'⚠ 截至 2026 年 6 月，教育部尚未針對 Trump account 發布 FAFSA 專屬規定，以下分析基於現行 IRA 適用規則推論。'},
+    options:[
+      {value:'yes_key',  label:'是，這對我非常重要', sub:'希望帳戶對助學金影響越小越好', next:'disability'},
+      {value:'yes_some', label:'可能會，但不是最主要考量', next:'disability'},
+      {value:'no',       label:'不太可能申請', sub:'例如家庭高收入或計畫全額自費', next:'disability'},
+      {value:'unsure',   label:'不確定', next:'disability'},
+    ]
+  },
+
+  disability: {
+    id:'disability', phase:2,
+    context:'實務條件 · 特殊需求',
+    text:'孩子是否有身心障礙相關的財務規劃需求？',
+    hint:'Trump account 在受益人 17 歲當年，可全額轉入 ABLE 帳戶（須為直接 trustee-to-trustee 轉帳）。對有此需求的家庭，這是重要的制度出口。',
+    options:[
+      {value:'yes',   label:'是，ABLE 帳戶規劃對我們很重要', next:'RESULT'},
+      {value:'maybe', label:'不確定，保留彈性比較好', next:'RESULT'},
+      {value:'no',    label:'否，不需要這項功能', next:'RESULT'},
+    ]
+  },
+};
+
+// ─── EARLY EXIT NODES ────────────────────────────────────────────
+const EARLY_EXITS = {
+  ssn_pending: {
+    type:'early',
+    color:'warn',
+    badge:'暫緩開設 Trump Account',
+    badgeColor:'badge-warn',
+    title:'建議先從 529 計畫開始',
+    body:`<p style="margin-bottom:10px">開設 Trump account 的必要前提是孩子已取得 SSN。在此之前，可以先進行以下步驟：</p>
+    <div style="margin-bottom:8px"><strong>現在可以做：</strong>開設 ScholarShare 529，開始教育儲蓄，不受 SSN 限制。</div>
+    <div style="margin-bottom:8px"><strong>取得 SSN 後：</strong>如果孩子出生於 2025–2028 年，再回來評估是否申請 Trump account 接收 $1,000 種子金。</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-top:12px">若孩子已在申請 SSN，通常幾週內可取得，屆時再開設 Trump account 亦不影響種子金資格（需在孩子 18 歲前、試點期間內完成）。</div>`,
+  }
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+let history = [];   // stack of question ids for back navigation
+let current = 'ssn';
+let answers = {};
+
+// ─── RENDER ──────────────────────────────────────────────────────
+function renderPhase(phase){
+  ['ph0','ph1','ph2','ph3'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    el.className = 'phase-seg' + (i===phase?' active':i<phase?' done':'');
+  });
+}
+
+function renderQ(qid){
+  const q = Q[qid];
+  if(!q) return;
+  renderPhase(q.phase);
+  const saved = answers[qid];
+
+  let alertHTML = '';
+  if(q.alert){
+    alertHTML = `<div class="q-alert ${q.alert.type}">${q.alert.text}</div>`;
+  }
+
+  document.getElementById('quizArea').innerHTML = `
+  <div class="card">
+    <div class="q-context">${q.context}</div>
+    <div class="q-text">${q.text}</div>
+    <div class="q-hint">${q.hint}</div>
+    ${alertHTML}
+    <div class="options" id="opts">
+      ${q.options.map(o=>`
+        <div class="option ${o.warn?'warn-opt':''} ${saved===o.value?'selected':''}" onclick="selectOpt('${qid}','${o.value}',this)">
+          <div class="opt-radio"></div>
+          <div class="opt-body">
+            <div class="opt-label">${o.label}</div>
+            ${o.sub?`<div class="opt-sub">${o.sub}</div>`:''}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="nav">
+      ${history.length>0?`<button class="btn btn-back" onclick="goBack()">← 返回</button>`:''}
+      <button class="btn btn-primary" id="nextBtn" onclick="goNext()" ${saved?'':'disabled'}>下一步 →</button>
+    </div>
+  </div>`;
+}
+
+function renderEarlyExit(key){
+  renderPhase(3);
+  const ex = EARLY_EXITS[key];
+  document.getElementById('quizArea').innerHTML = `
+  <div class="exit-card ${ex.color}-exit">
+    <span class="rec-badge ${ex.badgeColor}">${ex.badge}</span>
+    <div class="exit-title">${ex.title}</div>
+    <div class="exit-body">${ex.body}</div>
+  </div>
+  ${renderNextSteps('529_only')}
+  ${caNotice()}
+  <button class="restart-btn" onclick="restart()">← 重新作答</button>`;
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────
+function selectOpt(qid, value, el){
+  answers[qid] = value;
+  document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function goNext(){
+  const q = Q[current];
+  if(!q || !answers[current]) return;
+  const sel = q.options.find(o=>o.value===answers[current]);
+  if(!sel) return;
+  history.push(current);
+  const nx = sel.next;
+  if(nx === 'RESULT'){
+    showResult();
+  } else if(EARLY_EXITS[nx]){
+    current = '__early__';
+    document.getElementById('resultArea').className='result-hidden';
+    renderEarlyExit(nx);
+  } else {
+    current = nx;
+    renderQ(current);
+  }
+}
+
+function goBack(){
+  if(history.length===0) return;
+  current = history.pop();
+  document.getElementById('resultArea').className='result-hidden';
+  renderQ(current);
+}
+
+function restart(){
+  history=[];
+  current='ssn';
+  answers={};
+  document.getElementById('resultArea').className='result-hidden';
+  document.getElementById('quizArea').innerHTML='';
+  renderQ('ssn');
+}
+
+// ─── RESULT ENGINE ───────────────────────────────────────────────
+function showResult(){
+  renderPhase(3);
+  document.getElementById('quizArea').innerHTML='';
+  const r = computeResult();
+  document.getElementById('resultArea').className='';
+  document.getElementById('resultArea').innerHTML = buildResultHTML(r);
+}
+
+function computeResult(){
+  const a = answers;
+  const r = {
+    // hard flags
+    seedEligible: a.born_year==='yes' && a.ssn==='yes',
+    highAge: a.child_age==='teen_late',
+    flexNeeded: a.flexibility==='yes',
+    has529: a.existing_529==='yes_active',
+    budgetHigh: a.budget==='high',
+    fafsa: a.fafsa,
+    disability: a.disability,
+    goal: a.primary_goal,
+    age: a.child_age,
+    budget: a.budget,
+    existing529: a.existing_529,
+    born: a.born_year,
+  };
+
+  // ── SCORING (after hard filters) ──
+  let s529=0, sTrump=0;
+  if(r.goal==='edu')        { s529+=4; }
+  if(r.goal==='retirement') { sTrump+=4; }
+  if(r.goal==='both')       { s529+=2; sTrump+=2; }
+  if(r.goal==='unsure')     { s529+=1; }
+  if(r.flexNeeded)          { s529+=3; }  // hard lean
+  if(r.disability==='yes')  { sTrump+=3; }
+  if(r.disability==='maybe'){ sTrump+=1; }
+  if(r.fafsa==='yes_key')   { s529+=2; }
+  if(r.seedEligible)        { sTrump+=2; }
+  if(r.highAge)             { s529+=2; }  // Trump account 效益低
+  if(r.has529)              { sTrump+=1; } // 已有529，Trump補充角色
+
+  // ── PRIMARY STRATEGY ──
+  let strategy;
+  // Hard overrides first
+  if(r.flexNeeded && r.goal==='edu'){
+    strategy = 'edu_flex_needed';
+  } else if(r.highAge && !r.disability){
+    strategy = 'high_age_529';
+  } else if(r.disability==='yes'){
+    strategy = 'disability_focus';
+  } else if(r.goal==='retirement' && !r.flexNeeded){
+    strategy = 'retirement_trump';
+  } else if(r.goal==='edu'){
+    strategy = 'edu_529';
+  } else if(r.budgetHigh && !r.flexNeeded){
+    strategy = 'combo';
+  } else if(s529 > sTrump+1){
+    strategy = 'edu_529';
+  } else if(sTrump > s529+1){
+    strategy = 'trump_lean';
+  } else {
+    strategy = 'combo';
+  }
+
+  // Seed note
+  r.seedNote = r.seedEligible
+    ? '孩子符合 $1,000 種子金資格，無論最終策略為何，申請 Trump account 接收這筆錢幾乎是零成本的正確選擇。'
+    : (r.born==='no' ? '孩子出生於 2025 年以前，不符合 $1,000 種子金試點，但仍可開設 Trump account。' : null);
+
+  r.strategy = strategy;
+  r.s529 = s529;
+  r.sTrump = sTrump;
+  return r;
+}
+
+// ─── BUILD HTML ──────────────────────────────────────────────────
+const strategyMap = {
+  edu_flex_needed:{
+    emoji:'🎓',
+    title:'529 計畫是您的核心工具',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（ScholarShare）',
+    primaryBody:'您的主要目標是教育費用，且在 18 歲前可能需要動用部分資金——這兩點都直接指向 529。529 可以隨時用於合格教育支出做免稅提款，Trump account 在 18 歲前則幾乎完全無法動用，不符合您的需求。',
+    secondary: a => a.seedEligible
+      ? 'Trump account（僅建議接收 $1,000 種子金，不需額外每年供款）'
+      : null,
+    secondaryBody:'若孩子符合種子金資格，可申請 Trump account 接收 $1,000，讓它作為長期補充資產，但不需要每年額外投入 $5,000。兩個角色完全不同：529 負責教育，Trump account 放著長期增值。',
+    nextSteps:'529_primary',
+  },
+  high_age_529:{
+    emoji:'⏳',
+    title:'529 計畫更適合您的家庭',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（ScholarShare）',
+    primaryBody:'孩子已 14 歲以上，距離 18 歲只剩 1–4 年。Trump account 的核心優勢是 18 年複利效應，在這個年齡開設，成年後立刻進入傳統 IRA 的課稅框架，對教育費用也沒有任何免稅優惠。529 在這個時間點的教育費用規劃上，效益明顯優於 Trump account。',
+    secondary: a => a.seedEligible ? 'Trump account（僅接收種子金）' : null,
+    secondaryBody:'若符合種子金資格，$1,000 仍值得申請，但不建議每年額外投入。',
+    nextSteps:'529_primary',
+  },
+  disability_focus:{
+    emoji:'💙',
+    title:'Trump Account 有您最需要的功能',
+    badge:'badge-blue', badgeLabel:'主要建議',
+    primary:'Trump account + ABLE 帳戶規劃',
+    primaryBody:'Trump account 在受益人 17 歲當年可全額轉入 ABLE 帳戶（必須為直接 trustee-to-trustee 轉帳），這是針對身心障礙財務規劃的重要功能。加州 CalABLE 與 Trump account 的銜接細節仍待進一步官方指引，建議提前與熟悉 ABLE 規劃的顧問確認。',
+    secondary: ()=>'529 計畫（教育費用並行）',
+    secondaryBody:'529 計畫仍是處理教育費用最有效率的工具，建議同步開設，用於大學或 K-12 合格支出。',
+    nextSteps:'both',
+  },
+  retirement_trump:{
+    emoji:'🌱',
+    title:'Trump Account 符合您的長期資產目標',
+    badge:'badge-gold', badgeLabel:'主要建議',
+    primary:'Trump account（530A）',
+    primaryBody:'您的目標是替孩子建立長期退休型資產，而非短期教育費用。Trump account 在 18 歲前鎖定增值、成年後轉為傳統 IRA 的架構，正是為此設計。請留意：加州目前不跟從聯邦延稅規定，帳戶內收益可能每年須繳加州州稅，實際報酬會低於純聯邦計算值。',
+    secondary: ()=>'529 計畫（若有教育費用需求）',
+    secondaryBody:'若未來有教育費用需求，529 仍是最有效率的工具，兩者可以並行，不互斥。',
+    nextSteps:'trump_primary',
+  },
+  edu_529:{
+    emoji:'🎓',
+    title:'529 計畫是您的首選',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（ScholarShare）',
+    primaryBody:'您的主要目標是教育費用，529 的制度設計完全針對此目標：合格教育支出分配在聯邦層面免所得稅，可用範圍涵蓋大學學費、K-12 費用（聯邦年上限 $20,000）、學徒訓練、部分證照課程，以及每人終身最多 $10,000 的學貸償還。',
+    secondary: a => a.seedEligible ? 'Trump account（接收種子金 + 長期補充）' : 'Trump account（補充性長期資產）',
+    secondaryBody: a => a.seedEligible
+      ? '孩子符合種子金資格，申請 Trump account 接收 $1,000 幾乎沒有成本。若預算允許，後續每年也可選擇性投入，作為孩子成年後的退休資產補充。'
+      : '若預算允許，可同步開設 Trump account 作為長期退休型資產補充，但教育費用仍以 529 為主。',
+    nextSteps:'529_primary',
+  },
+  trump_lean:{
+    emoji:'💰',
+    title:'Trump Account 有一定吸引力',
+    badge:'badge-gold', badgeLabel:'主要建議',
+    primary:'Trump account（530A）',
+    primaryBody:'根據您的條件，Trump account 在長期退休資產建立上有一定優勢，尤其是孩子年紀小、種子金資格符合、不需要 18 歲前動用資金的情況下。成年後若以 Roth 轉換策略利用，長期稅務效益可觀。請注意加州目前不認可聯邦延稅規定，建議與 CPA 確認加州州稅影響。',
+    secondary: ()=>'529 計畫（教育費用備用）',
+    secondaryBody:'529 應同步開設處理教育費用，兩者目標不同、可以並行。',
+    nextSteps:'both',
+  },
+  combo:{
+    emoji:'⚖️',
+    title:'兩者並用最符合您的需求',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（教育）+ Trump account（長期資產）',
+    primaryBody:'您的目標多元、預算也有一定空間，兩種帳戶的功能定位完全不同，可以並行而不衝突：529 專門處理教育費用，享有聯邦免稅優惠；Trump account 負責建立孩子的長期退休型資產。不需要二選一。',
+    secondary:()=>null,
+    secondaryBody:null,
+    nextSteps:'both',
+  },
+};
+
+function buildResultHTML(r){
+  const s = strategyMap[r.strategy];
+  const a = r;
+  const sec = typeof s.secondary==='function' ? s.secondary(a) : s.secondary;
+  const secBody = typeof s.secondaryBody==='function' ? s.secondaryBody(a) : s.secondaryBody;
+
+  let factors = [];
+  if(r.seedEligible) factors.push({dot:'dot-p', text:'孩子符合 $1,000 政府種子金資格（2025–2028 出生），申請 Trump account 接收這筆錢幾乎沒有成本。'});
+  if(r.highAge) factors.push({dot:'dot-w', text:'孩子年齡較大（14 歲以上），Trump account 的長期複利優勢有限，18 歲後即轉入傳統 IRA 課稅框架。'});
+  if(r.flexNeeded) factors.push({dot:'dot-w', text:'您表示可能在 18 歲前需要動用資金。Trump account 此期間幾乎完全不可提款，是重要限制。'});
+  if(r.fafsa==='yes_key') factors.push({dot:'dot-b', text:'助學金是重要考量：Trump account 18 歲前不計入 FAFSA 資產，但 18 歲後提款計入學生收入（影響達 50%）；529 通常列為家長資產（影響約 5.64%）。教育部尚無 Trump account 的 FAFSA 專屬指引。'});
+  if(r.disability==='yes') factors.push({dot:'dot-b', text:'ABLE 規劃需求：Trump account 在 17 歲當年可全額轉入 CalABLE，是針對身障財務規劃的重要功能，目前細節仍待官方進一步說明。'});
+  if(r.has529) factors.push({dot:'dot-g', text:'您已有運作中的 529，教育儲蓄基礎穩固，Trump account 若開設，角色主要是長期退休型資產補充。'});
+
+  const factorsHTML = factors.length>0 ? `
+    <div class="section-label">根據您的具體條件</div>
+    <div class="factors-card">
+      ${factors.map(f=>`<div class="factor-row"><div class="fdot ${f.dot}"></div><div>${f.text}</div></div>`).join('')}
+    </div>` : '';
+
+  // Seed box
+  const seedHTML = r.seedNote ? `<div class="seed-box">🌱 <strong>種子金提醒：</strong>${r.seedNote}</div>` : '';
+
+  // Age warning
+  const ageWarnHTML = r.highAge ? `<div class="age-warn">⏳ <strong>年齡提醒：</strong>孩子 14 歲以上，距 18 歲只剩少數年份。Trump account 屆時即轉為傳統 IRA，不再有 18 歲前的特殊規則。對這個年齡的孩子，若目標是教育費用，529 的即時可用性更有實際意義。</div>` : '';
+
+  // Comparison mini-table
+  const tableHTML = `
+  <div class="section-label">快速對照</div>
+  <div class="factors-card" style="overflow-x:auto">
+    <table class="comparison-table">
+      <thead><tr><th>面向</th><th>529 計畫</th><th>Trump account</th></tr></thead>
+      <tbody>
+        <tr><td>核心用途</td><td>教育費用</td><td>長期退休資產</td></tr>
+        <tr><td>教育支出免稅</td><td><span class="tag tag-g">✓ 聯邦免稅</span></td><td><span class="tag tag-w">✗ 無</span></td></tr>
+        <tr><td>18 歲前提款</td><td><span class="tag tag-g">✓ 可用於合格支出</span></td><td><span class="tag tag-w">✗ 幾乎不可動用</span></td></tr>
+        <tr><td>政府種子金</td><td><span class="tag tag-gray">✗ 無</span></td><td><span class="tag tag-g">${r.seedEligible?'✓ $1,000 符合資格':'參考條件'}</span></td></tr>
+        <tr><td>加州州稅</td><td><span class="tag tag-gray">無扣除（教育免稅仍在）</span></td><td><span class="tag tag-w">可能每年課稅</span></td></tr>
+        <tr><td>FAFSA 影響</td><td><span class="tag tag-g">家長資產（~5.64%）</span></td><td><span class="tag tag-gray">尚無官方指引</span></td></tr>
+        <tr><td>ABLE 轉入</td><td><span class="tag tag-gray">部分可轉</span></td><td><span class="tag tag-b" style="background:var(--blue-light);color:var(--blue)">17 歲當年可全額轉</span></td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+  return `
+  <div class="result-hero">
+    <div class="result-emoji">${s.emoji}</div>
+    <div class="result-title">${s.title}</div>
+    <div class="result-sub">根據您的 ${Object.keys(answers).length} 個回答所產生的個人化分析</div>
+  </div>
+
+  <div class="section-label">主要建議</div>
+  <div class="rec-card primary">
+    <span class="rec-badge ${s.badge}">${s.badgeLabel}</span>
+    <div class="rec-name">${s.primary}</div>
+    <div class="rec-body">${s.primaryBody}</div>
+  </div>
+
+  ${sec ? `
+  <div class="rec-card secondary">
+    <span class="rec-badge badge-gray">補充選項</span>
+    <div class="rec-name">${sec}</div>
+    <div class="rec-body">${secBody||''}</div>
+  </div>` : ''}
+
+  ${seedHTML}
+  ${ageWarnHTML}
+  ${factorsHTML}
+  ${tableHTML}
+
+  ${renderNextSteps(s.nextSteps)}
+  ${caNotice()}
+
+  <button class="restart-btn" onclick="restart()">← 重新作答</button>
+  `;
+}
+
+function renderNextSteps(type){
+  const steps529 = [
+    {n:1, text:`<strong>開設 ScholarShare 529</strong>：前往 <a href="https://www.scholarshare529.com" target="_blank">scholarshare529.com</a> 開戶，最低投入門檻很低，可從小額開始。`},
+    {n:2, text:`<strong>設定定期自動投入</strong>：529 的最大優勢之一是長期複利，建議設定每月自動扣款，不需要記得手動存入。`},
+    {n:3, text:`<strong>諮詢 CPA 或 CFP</strong>：確認加州州稅處理方式（529 目前無加州扣除，但教育用途提款通常適用聯邦免稅）。`},
+  ];
+  const stepsTrump = [
+    {n:1, text:`<strong>填寫 IRS Form 4547</strong>：可附在 2025 年報稅表一起提交，或等 <a href="https://trumpaccounts.gov" target="_blank">trumpaccounts.gov</a> 上線後線上申請（預計 2026 年 7 月）。`},
+    {n:2, text:`<strong>等待財政部確認</strong>：財政部將分配帳戶管理機構，預計 2026 年 5 月起陸續通知。7 月 4 日後開始可供款及種子金存入。`},
+    {n:3, text:`<strong>確認加州稅務影響</strong>：加州目前不認可聯邦延稅規定，建議與 CPA 確認每年的加州州稅處理方式。`},
+  ];
+  const stepsBoth = [
+    {n:1, text:`<strong>先開 529</strong>：前往 <a href="https://www.scholarshare529.com" target="_blank">scholarshare529.com</a> 開戶，處理教育費用需求。`},
+    {n:2, text:`<strong>申請 Trump account</strong>：填寫 Form 4547 或等 <a href="https://trumpaccounts.gov" target="_blank">trumpaccounts.gov</a> 上線（2026 年 7 月），接收種子金並開始長期資產規劃。`},
+    {n:3, text:`<strong>諮詢專業顧問</strong>：兩個帳戶並行涉及更複雜的稅務與助學金規劃，建議諮詢持照 CFP 或 CPA，確保策略一致。`},
+  ];
+
+  const map = {
+    '529_only': steps529,
+    '529_primary': steps529,
+    'trump_primary': stepsTrump,
+    'both': stepsBoth,
+  };
+  const chosen = map[type] || steps529;
+
+  return `
+  <div class="section-label">建議的下一步</div>
+  <div class="steps-card">
+    <div class="steps-title">行動清單</div>
+    ${chosen.map(s=>`
+    <div class="step-row">
+      <div class="step-num">${s.n}</div>
+      <div class="step-body">${s.text}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function caNotice(){
+  return `<div class="ca-notice">
+  📌 <strong>加州居民重要提醒：</strong>
+  （1）Trump account：加州目前不跟從聯邦 §530A 稅法，帳戶投資收益可能每年須繳加州州稅，長期影響不可忽視。
+  （2）529：加州目前無州所得稅扣除（SB529 已於 2026 年 2 月失效），但聯邦教育免稅優惠仍適用。
+  （3）FAFSA：教育部尚未發布 Trump account 的正式 FAFSA 分類規定，以上分析均基於現行 IRA 規則推論，請持續關注官方更新。
+  </div>`;
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+renderQ('ssn');
+</script>
+</body>
+</html>
