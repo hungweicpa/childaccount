@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加州兒童儲蓄帳戶決策工具 v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#1c1c2e;
+  --ink-mid:#4a4a6a;
+  --ink-soft:#8888aa;
+  --bg:#f5f4ef;
+  --surface:#ffffff;
+  --green:#2d6a4f;
+  --green-mid:#40916c;
+  --green-light:#e8f5ee;
+  --green-dark:#1b4332;
+  --warn:#b5541a;
+  --warn-light:#fdf0e8;
+  --blue:#1d4e89;
+  --blue-light:#e8f0fa;
+  --gold:#9c6b00;
+  --gold-light:#fdf6e3;
+  --purple:#5c3d8f;
+  --purple-light:#f0ebfa;
+  --border:#e0dfd8;
+  --border-mid:#c8c7be;
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 2px 20px rgba(28,28,46,0.08);
+}
+
+body{font-family:'Noto Sans TC','Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+/* HERO */
+.hero{background:var(--ink);color:#fff;padding:52px 24px 44px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 0%,rgba(64,145,108,0.18) 0%,transparent 65%);pointer-events:none}
+.hero-tag{display:inline-block;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#7dd3a8;margin-bottom:14px}
+.hero h1{font-size:clamp(20px,4.5vw,36px);font-weight:700;line-height:1.25;letter-spacing:-.025em;margin-bottom:12px}
+.hero p{font-size:14.5px;color:rgba(255,255,255,.58);max-width:480px;margin:0 auto;line-height:1.75}
+
+/* DISCLAIMER */
+.disclaimer{background:var(--warn-light);border-bottom:1px solid #f0c9a8;padding:12px 20px;font-size:12px;color:var(--warn);line-height:1.65;text-align:center}
+
+/* MAIN */
+.main{max-width:660px;margin:0 auto;padding:28px 18px 72px}
+
+/* PHASE INDICATOR */
+.phase-bar{display:flex;gap:0;margin-bottom:28px;border-radius:99px;overflow:hidden;border:1px solid var(--border)}
+.phase-seg{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:500;color:var(--ink-soft);background:white;transition:all .25s;position:relative}
+.phase-seg.active{background:var(--ink);color:white}
+.phase-seg.done{background:var(--green-light);color:var(--green-mid)}
+.phase-seg:not(:last-child){border-right:1px solid var(--border)}
+
+/* QUESTION CARD */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:26px 26px 22px;box-shadow:var(--shadow);margin-bottom:14px;animation:slideIn .22s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.q-context{font-size:11px;font-weight:600;color:var(--green-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.q-text{font-size:16.5px;font-weight:700;color:var(--ink);line-height:1.5;margin-bottom:5px}
+.q-hint{font-size:13px;color:var(--ink-soft);line-height:1.65;margin-bottom:18px;padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--border-mid)}
+
+/* ALERT inside question */
+.q-alert{font-size:12.5px;line-height:1.65;padding:10px 13px;border-radius:var(--radius-sm);margin-bottom:18px;border-left:3px solid}
+.q-alert.warn{background:var(--warn-light);color:var(--warn);border-color:var(--warn)}
+.q-alert.info{background:var(--blue-light);color:var(--blue);border-color:var(--blue)}
+
+/* OPTIONS */
+.options{display:flex;flex-direction:column;gap:9px}
+.option{display:flex;align-items:flex-start;gap:13px;padding:13px 15px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:border-color .14s,background .14s;background:white}
+.option:hover{border-color:var(--green-mid);background:var(--green-light)}
+.option.selected{border-color:var(--green);background:var(--green-light)}
+.option.warn-opt{border-color:#f0c9a8}
+.option.warn-opt:hover,.option.warn-opt.selected{border-color:var(--warn);background:var(--warn-light)}
+.opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-mid);flex-shrink:0;margin-top:2px;transition:all .14s;position:relative}
+.option.selected .opt-radio{border-color:var(--green);background:var(--green)}
+.option.selected .opt-radio::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:white}
+.option.warn-opt.selected .opt-radio{border-color:var(--warn);background:var(--warn)}
+.opt-body{flex:1}
+.opt-label{font-size:14px;font-weight:500;color:var(--ink);line-height:1.45}
+.opt-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;line-height:1.5}
+
+/* EARLY EXIT CARD */
+.exit-card{background:white;border-radius:var(--radius);border:2px solid var(--border);padding:22px 22px 18px;margin-bottom:14px;animation:slideIn .22s ease}
+.exit-badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px}
+.exit-card .exit-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.exit-card .exit-body{font-size:13.5px;color:var(--ink-mid);line-height:1.75}
+.exit-card.green-exit{border-color:var(--green)}
+.exit-card.warn-exit{border-color:var(--warn)}
+
+/* NAV */
+.nav{display:flex;gap:10px;margin-top:18px}
+.btn{padding:12px 22px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s;border:none}
+.btn-primary{background:var(--ink);color:white;flex:1}
+.btn-primary:hover{background:#2d2d45}
+.btn-primary:disabled{background:var(--border);color:var(--ink-soft);cursor:not-allowed}
+.btn-back{background:transparent;color:var(--ink-mid);border:1.5px solid var(--border);padding:12px 16px}
+.btn-back:hover{border-color:var(--ink-mid);color:var(--ink)}
+.btn-outline{background:transparent;color:var(--ink-mid);border:1.5px solid var(--border);width:100%;padding:13px;margin-top:6px}
+.btn-outline:hover{border-color:var(--ink-mid);color:var(--ink)}
+
+/* RESULT */
+.result-hidden{display:none}
+
+.result-hero{text-align:center;padding:28px 0 20px}
+.result-emoji{font-size:38px;margin-bottom:10px}
+.result-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.result-sub{font-size:13.5px;color:var(--ink-soft);line-height:1.65}
+
+.section-label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em;margin:22px 0 10px}
+
+/* REC CARDS */
+.rec-card{border-radius:var(--radius);padding:20px 22px;margin-bottom:11px;border:2px solid}
+.rec-card.primary{border-color:var(--green);background:var(--green-light)}
+.rec-card.secondary{border-color:var(--border);background:white}
+.rec-card.caution{border-color:#f0c9a8;background:var(--warn-light)}
+.rec-card.info-card{border-color:#b8d0ee;background:var(--blue-light)}
+.rec-badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.badge-green{background:var(--green);color:white}
+.badge-gray{background:#d0cfc8;color:#5a5a72}
+.badge-warn{background:var(--warn);color:white}
+.badge-blue{background:var(--blue);color:white}
+.badge-gold{background:var(--gold);color:white}
+.rec-name{font-size:16.5px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.rec-body{font-size:13.5px;color:var(--ink-mid);line-height:1.75}
+
+/* FACTORS */
+.factors-card{background:white;border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;margin-bottom:11px}
+.factor-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.65;color:var(--ink-mid)}
+.factor-row:last-child{margin-bottom:0}
+.fdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.dot-g{background:var(--green)}
+.dot-w{background:var(--warn)}
+.dot-b{background:var(--blue)}
+.dot-gold{background:var(--gold)}
+.dot-p{background:var(--purple)}
+
+/* NEXT STEPS */
+.steps-card{background:var(--ink);color:white;border-radius:var(--radius);padding:22px 22px 18px;margin-bottom:11px}
+.steps-title{font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:14px}
+.step-row{display:flex;gap:14px;margin-bottom:13px;align-items:flex-start}
+.step-row:last-child{margin-bottom:0}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--green-mid);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-body{font-size:13px;line-height:1.65;color:rgba(255,255,255,.8)}
+.step-body a{color:#7dd3a8;text-decoration:none}
+.step-body strong{color:white;font-weight:500}
+
+/* CA NOTICE */
+.ca-notice{background:var(--gold-light);border:1px solid #e8d5a0;border-radius:var(--radius-sm);padding:13px 15px;font-size:12.5px;color:var(--gold);line-height:1.7;margin-bottom:11px}
+
+/* SEED HIGHLIGHT */
+.seed-box{background:var(--purple-light);border:1.5px solid #c4a8e8;border-radius:var(--radius-sm);padding:13px 15px;font-size:13px;color:var(--purple);line-height:1.7;margin-bottom:11px}
+
+/* AGE WARNING */
+.age-warn{background:var(--warn-light);border:1.5px solid #f0c9a8;border-radius:var(--radius-sm);padding:12px 15px;font-size:13px;color:var(--warn);line-height:1.65;margin-bottom:11px}
+
+.restart-btn{width:100%;padding:13px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--ink-soft);font-size:13.5px;font-weight:500;font-family:inherit;cursor:pointer;margin-top:4px;transition:all .15s}
+.restart-btn:hover{border-color:var(--ink-mid);color:var(--ink)}
+
+.comparison-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:2px}
+.comparison-table th{font-weight:500;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.comparison-table td{padding:9px 10px;border-bottom:.5px solid var(--border);vertical-align:top;line-height:1.55;color:var(--ink-mid)}
+.comparison-table tr:last-child td{border-bottom:none}
+.comparison-table td:first-child{color:var(--ink);font-weight:500;white-space:nowrap}
+.tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:500}
+.tag-g{background:var(--green-light);color:var(--green)}
+.tag-w{background:var(--warn-light);color:var(--warn)}
+.tag-gray{background:var(--bg);color:var(--ink-soft)}
+
+@media(max-width:480px){
+  .card,.rec-card,.factors-card,.steps-card{padding:18px 14px}
+  .hero{padding:36px 14px 30px}
+  .main{padding:20px 12px 56px}
+  .phase-seg{font-size:9.5px;padding:7px 2px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">加州居民 · 2026 年版</div>
+  <h1>孩子的錢，該怎麼存？</h1>
+  <p>Trump Account（530A）、529 計畫，根據您的家庭條件，找到真正適合的答案</p>
+</div>
+
+<div class="disclaimer">
+  ⚠ 本工具僅供參考，不構成法律或稅務建議。法規隨時可能更新，重要決策請諮詢持照財務顧問（CFP）或稅務師（CPA）。
+</div>
+
+<div class="main">
+  <div class="phase-bar" id="phaseBar">
+    <div class="phase-seg active" id="ph0">資格確認</div>
+    <div class="phase-seg" id="ph1">目標方向</div>
+    <div class="phase-seg" id="ph2">實務條件</div>
+    <div class="phase-seg" id="ph3">建議結果</div>
+  </div>
+
+  <div id="quizArea"></div>
+  <div id="resultArea" class="result-hidden"></div>
+</div>
+
+<script>
+// ─── QUESTION TREE ───────────────────────────────────────────────
+// Each node: id, phase(0-2), context, text, hint, alert?, options[]
+// option: value, label, sub?, warn?(bool), next(fn|string)
+
+const Q = {
+
+  // ── PHASE 0: 資格確認 ─────────────────────────
+  ssn: {
+    id:'ssn', phase:0,
+    context:'資格確認 · 第一關',
+    text:'孩子是否已取得社會安全號碼（SSN）？',
+    hint:'開設 Trump account 的法定前提是孩子在設立當年年底前未滿 18 歲，且已取得 SSN。',
+    options:[
+      {value:'yes', label:'是，已有 SSN', next:'child_age'},
+      {value:'applied', label:'申請中，還沒拿到', sub:'通常幾週內可取得', next:'ssn_pending'},
+      {value:'no', label:'否，尚未申請', next:'ssn_pending'},
+    ]
+  },
+
+  child_age: {
+    id:'child_age', phase:0,
+    context:'資格確認 · 第二關',
+    text:'孩子目前幾歲？',
+    hint:'Trump account 的複利優勢主要來自長期鎖定；孩子年齡越大，效益遞減。',
+    options:[
+      {value:'infant',  label:'0–2 歲（含新生兒）', sub:'Trump account 複利期最長，效益最大', next:'born_year'},
+      {value:'young',   label:'3–8 歲', next:'born_year'},
+      {value:'teen_early', label:'9–13 歲', sub:'距 18 歲尚有 5–9 年', next:'born_year'},
+      {value:'teen_late',  label:'14–17 歲', sub:'距 18 歲僅 1–4 年，效益有限', next:'born_year'},
+    ]
+  },
+
+  born_year: {
+    id:'born_year', phase:0,
+    context:'資格確認 · 第三關',
+    text:'孩子是否於 2025 年 1 月 1 日至 2028 年 12 月 31 日之間出生？',
+    hint:'此出生年份範圍決定孩子是否可能獲得政府一次性 $1,000 種子金試點補助。',
+    options:[
+      {value:'yes', label:'是，出生於 2025–2028 年', sub:'可能符合 $1,000 種子金資格', next:'existing_529'},
+      {value:'no',  label:'否，出生於 2025 年以前', sub:'仍可開設 Trump account，但無種子金', next:'existing_529'},
+    ]
+  },
+
+  // ── PHASE 1: 目標方向 ─────────────────────────
+  existing_529: {
+    id:'existing_529', phase:1,
+    context:'目標方向 · 現況盤點',
+    text:'您是否已為這個孩子開設 529（ScholarShare）計畫？',
+    hint:'若已有運作中的 529，Trump account 的角色會更清晰——主要是補充性的長期資產工具。',
+    options:[
+      {value:'yes_active',  label:'是，已有且持續在存', next:'primary_goal'},
+      {value:'yes_inactive', label:'有開戶但沒在存錢', next:'primary_goal'},
+      {value:'no', label:'尚未開設', next:'primary_goal'},
+    ]
+  },
+
+  primary_goal: {
+    id:'primary_goal', phase:1,
+    context:'目標方向 · 核心目的',
+    text:'您為孩子存錢，最主要的目的是什麼？',
+    hint:'這是最關鍵的問題。兩種帳戶在制度設計上針對不同目標，答案會大幅影響建議方向。',
+    options:[
+      {value:'edu',        label:'大學或 K-12 教育費用為主', sub:'學費、教材、住宿、學貸等', next:'budget'},
+      {value:'retirement', label:'替孩子建立長期退休資產', sub:'18 歲後讓孩子自行運用的財富', next:'budget'},
+      {value:'both',       label:'教育和長期資產都想兼顧', next:'budget'},
+      {value:'unsure',     label:'還不確定，先了解選項', next:'budget'},
+    ]
+  },
+
+  // ── PHASE 2: 實務條件 ─────────────────────────
+  budget: {
+    id:'budget', phase:2,
+    context:'實務條件 · 每年預算',
+    text:'您預計每年能為孩子投入多少儲蓄？',
+    hint:'Trump account 年上限為 $5,000；若預算充裕，可以兩種帳戶並用，不需要二選一。',
+    options:[
+      {value:'low',    label:'$1,000 以下', next:'flexibility'},
+      {value:'mid',    label:'$1,000–$5,000', next:'flexibility'},
+      {value:'high',   label:'$5,000 以上', sub:'可考慮兩者並用', next:'flexibility'},
+      {value:'unsure', label:'還不確定', next:'flexibility'},
+    ]
+  },
+
+  flexibility: {
+    id:'flexibility', phase:2,
+    context:'實務條件 · 流動性需求',
+    text:'孩子 18 歲以前，您是否可能需要動用這筆錢？',
+    hint:'Trump account 18 歲前幾乎完全無法提款，無例外情形不可動用。529 則可隨時用於合格教育支出。',
+    options:[
+      {value:'yes',    label:'有可能，希望保有彈性', sub:'例如 K-12 學費、臨時需要', warn:true, next:'fafsa'},
+      {value:'no',     label:'不需要，可以長期鎖定', next:'fafsa'},
+      {value:'unsure', label:'不確定，希望有備用選項', next:'fafsa'},
+    ]
+  },
+
+  fafsa: {
+    id:'fafsa', phase:2,
+    context:'實務條件 · 助學金規劃',
+    text:'您預計孩子未來會申請聯邦助學金（FAFSA）嗎？',
+    hint:'Trump account 18 歲前不計入 FAFSA 資產（屬退休帳戶）；但 18 歲後若提款，會計入「學生收入」，影響助學金最高達 50%。教育部尚未發布 Trump account 的 FAFSA 專屬指引。',
+    alert:{type:'info', text:'⚠ 截至 2026 年 6 月，教育部尚未針對 Trump account 發布 FAFSA 專屬規定，以下分析基於現行 IRA 適用規則推論。'},
+    options:[
+      {value:'yes_key',  label:'是，這對我非常重要', sub:'希望帳戶對助學金影響越小越好', next:'disability'},
+      {value:'yes_some', label:'可能會，但不是最主要考量', next:'disability'},
+      {value:'no',       label:'不太可能申請', sub:'例如家庭高收入或計畫全額自費', next:'disability'},
+      {value:'unsure',   label:'不確定', next:'disability'},
+    ]
+  },
+
+  disability: {
+    id:'disability', phase:2,
+    context:'實務條件 · 特殊需求',
+    text:'孩子是否有身心障礙相關的財務規劃需求？',
+    hint:'Trump account 在受益人 17 歲當年，可全額轉入 ABLE 帳戶（須為直接 trustee-to-trustee 轉帳）。對有此需求的家庭，這是重要的制度出口。',
+    options:[
+      {value:'yes',   label:'是，ABLE 帳戶規劃對我們很重要', next:'RESULT'},
+      {value:'maybe', label:'不確定，保留彈性比較好', next:'RESULT'},
+      {value:'no',    label:'否，不需要這項功能', next:'RESULT'},
+    ]
+  },
+};
+
+// ─── EARLY EXIT NODES ────────────────────────────────────────────
+const EARLY_EXITS = {
+  ssn_pending: {
+    type:'early',
+    color:'warn',
+    badge:'暫緩開設 Trump Account',
+    badgeColor:'badge-warn',
+    title:'建議先從 529 計畫開始',
+    body:`<p style="margin-bottom:10px">開設 Trump account 的必要前提是孩子已取得 SSN。在此之前，可以先進行以下步驟：</p>
+    <div style="margin-bottom:8px"><strong>現在可以做：</strong>開設 ScholarShare 529，開始教育儲蓄，不受 SSN 限制。</div>
+    <div style="margin-bottom:8px"><strong>取得 SSN 後：</strong>如果孩子出生於 2025–2028 年，再回來評估是否申請 Trump account 接收 $1,000 種子金。</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-top:12px">若孩子已在申請 SSN，通常幾週內可取得，屆時再開設 Trump account 亦不影響種子金資格（需在孩子 18 歲前、試點期間內完成）。</div>`,
+  }
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+let history = [];   // stack of question ids for back navigation
+let current = 'ssn';
+let answers = {};
+
+// ─── RENDER ──────────────────────────────────────────────────────
+function renderPhase(phase){
+  ['ph0','ph1','ph2','ph3'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    el.className = 'phase-seg' + (i===phase?' active':i<phase?' done':'');
+  });
+}
+
+function renderQ(qid){
+  const q = Q[qid];
+  if(!q) return;
+  renderPhase(q.phase);
+  const saved = answers[qid];
+
+  let alertHTML = '';
+  if(q.alert){
+    alertHTML = `<div class="q-alert ${q.alert.type}">${q.alert.text}</div>`;
+  }
+
+  document.getElementById('quizArea').innerHTML = `
+  <div class="card">
+    <div class="q-context">${q.context}</div>
+    <div class="q-text">${q.text}</div>
+    <div class="q-hint">${q.hint}</div>
+    ${alertHTML}
+    <div class="options" id="opts">
+      ${q.options.map(o=>`
+        <div class="option ${o.warn?'warn-opt':''} ${saved===o.value?'selected':''}" onclick="selectOpt('${qid}','${o.value}',this)">
+          <div class="opt-radio"></div>
+          <div class="opt-body">
+            <div class="opt-label">${o.label}</div>
+            ${o.sub?`<div class="opt-sub">${o.sub}</div>`:''}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="nav">
+      ${history.length>0?`<button class="btn btn-back" onclick="goBack()">← 返回</button>`:''}
+      <button class="btn btn-primary" id="nextBtn" onclick="goNext()" ${saved?'':'disabled'}>下一步 →</button>
+    </div>
+  </div>`;
+}
+
+function renderEarlyExit(key){
+  renderPhase(3);
+  const ex = EARLY_EXITS[key];
+  document.getElementById('quizArea').innerHTML = `
+  <div class="exit-card ${ex.color}-exit">
+    <span class="rec-badge ${ex.badgeColor}">${ex.badge}</span>
+    <div class="exit-title">${ex.title}</div>
+    <div class="exit-body">${ex.body}</div>
+  </div>
+  ${renderNextSteps('529_only')}
+  ${caNotice()}
+  <button class="restart-btn" onclick="restart()">← 重新作答</button>`;
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────
+function selectOpt(qid, value, el){
+  answers[qid] = value;
+  document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function goNext(){
+  const q = Q[current];
+  if(!q || !answers[current]) return;
+  const sel = q.options.find(o=>o.value===answers[current]);
+  if(!sel) return;
+  history.push(current);
+  const nx = sel.next;
+  if(nx === 'RESULT'){
+    showResult();
+  } else if(EARLY_EXITS[nx]){
+    current = '__early__';
+    document.getElementById('resultArea').className='result-hidden';
+    renderEarlyExit(nx);
+  } else {
+    current = nx;
+    renderQ(current);
+  }
+}
+
+function goBack(){
+  if(history.length===0) return;
+  current = history.pop();
+  document.getElementById('resultArea').className='result-hidden';
+  renderQ(current);
+}
+
+function restart(){
+  history=[];
+  current='ssn';
+  answers={};
+  document.getElementById('resultArea').className='result-hidden';
+  document.getElementById('quizArea').innerHTML='';
+  renderQ('ssn');
+}
+
+// ─── RESULT ENGINE ───────────────────────────────────────────────
+function showResult(){
+  renderPhase(3);
+  document.getElementById('quizArea').innerHTML='';
+  const r = computeResult();
+  document.getElementById('resultArea').className='';
+  document.getElementById('resultArea').innerHTML = buildResultHTML(r);
+}
+
+function computeResult(){
+  const a = answers;
+  const r = {
+    // hard flags
+    seedEligible: a.born_year==='yes' && a.ssn==='yes',
+    highAge: a.child_age==='teen_late',
+    flexNeeded: a.flexibility==='yes',
+    has529: a.existing_529==='yes_active',
+    budgetHigh: a.budget==='high',
+    fafsa: a.fafsa,
+    disability: a.disability,
+    goal: a.primary_goal,
+    age: a.child_age,
+    budget: a.budget,
+    existing529: a.existing_529,
+    born: a.born_year,
+  };
+
+  // ── SCORING (after hard filters) ──
+  let s529=0, sTrump=0;
+  if(r.goal==='edu')        { s529+=4; }
+  if(r.goal==='retirement') { sTrump+=4; }
+  if(r.goal==='both')       { s529+=2; sTrump+=2; }
+  if(r.goal==='unsure')     { s529+=1; }
+  if(r.flexNeeded)          { s529+=3; }  // hard lean
+  if(r.disability==='yes')  { sTrump+=3; }
+  if(r.disability==='maybe'){ sTrump+=1; }
+  if(r.fafsa==='yes_key')   { s529+=2; }
+  if(r.seedEligible)        { sTrump+=2; }
+  if(r.highAge)             { s529+=2; }  // Trump account 效益低
+  if(r.has529)              { sTrump+=1; } // 已有529，Trump補充角色
+
+  // ── PRIMARY STRATEGY ──
+  let strategy;
+  // Hard overrides first
+  if(r.flexNeeded && r.goal==='edu'){
+    strategy = 'edu_flex_needed';
+  } else if(r.highAge && !r.disability){
+    strategy = 'high_age_529';
+  } else if(r.disability==='yes'){
+    strategy = 'disability_focus';
+  } else if(r.goal==='retirement' && !r.flexNeeded){
+    strategy = 'retirement_trump';
+  } else if(r.goal==='edu'){
+    strategy = 'edu_529';
+  } else if(r.budgetHigh && !r.flexNeeded){
+    strategy = 'combo';
+  } else if(s529 > sTrump+1){
+    strategy = 'edu_529';
+  } else if(sTrump > s529+1){
+    strategy = 'trump_lean';
+  } else {
+    strategy = 'combo';
+  }
+
+  // Seed note
+  r.seedNote = r.seedEligible
+    ? '孩子符合 $1,000 種子金資格，無論最終策略為何，申請 Trump account 接收這筆錢幾乎是零成本的正確選擇。'
+    : (r.born==='no' ? '孩子出生於 2025 年以前，不符合 $1,000 種子金試點，但仍可開設 Trump account。' : null);
+
+  r.strategy = strategy;
+  r.s529 = s529;
+  r.sTrump = sTrump;
+  return r;
+}
+
+// ─── BUILD HTML ──────────────────────────────────────────────────
+const strategyMap = {
+  edu_flex_needed:{
+    emoji:'🎓',
+    title:'529 計畫是您的核心工具',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（ScholarShare）',
+    primaryBody:'您的主要目標是教育費用，且在 18 歲前可能需要動用部分資金——這兩點都直接指向 529。529 可以隨時用於合格教育支出做免稅提款，Trump account 在 18 歲前則幾乎完全無法動用，不符合您的需求。',
+    secondary: a => a.seedEligible
+      ? 'Trump account（僅建議接收 $1,000 種子金，不需額外每年供款）'
+      : null,
+    secondaryBody:'若孩子符合種子金資格，可申請 Trump account 接收 $1,000，讓它作為長期補充資產，但不需要每年額外投入 $5,000。兩個角色完全不同：529 負責教育，Trump account 放著長期增值。',
+    nextSteps:'529_primary',
+  },
+  high_age_529:{
+    emoji:'⏳',
+    title:'529 計畫更適合您的家庭',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（ScholarShare）',
+    primaryBody:'孩子已 14 歲以上，距離 18 歲只剩 1–4 年。Trump account 的核心優勢是 18 年複利效應，在這個年齡開設，成年後立刻進入傳統 IRA 的課稅框架，對教育費用也沒有任何免稅優惠。529 在這個時間點的教育費用規劃上，效益明顯優於 Trump account。',
+    secondary: a => a.seedEligible ? 'Trump account（僅接收種子金）' : null,
+    secondaryBody:'若符合種子金資格，$1,000 仍值得申請，但不建議每年額外投入。',
+    nextSteps:'529_primary',
+  },
+  disability_focus:{
+    emoji:'💙',
+    title:'Trump Account 有您最需要的功能',
+    badge:'badge-blue', badgeLabel:'主要建議',
+    primary:'Trump account + ABLE 帳戶規劃',
+    primaryBody:'Trump account 在受益人 17 歲當年可全額轉入 ABLE 帳戶（必須為直接 trustee-to-trustee 轉帳），這是針對身心障礙財務規劃的重要功能。加州 CalABLE 與 Trump account 的銜接細節仍待進一步官方指引，建議提前與熟悉 ABLE 規劃的顧問確認。',
+    secondary: ()=>'529 計畫（教育費用並行）',
+    secondaryBody:'529 計畫仍是處理教育費用最有效率的工具，建議同步開設，用於大學或 K-12 合格支出。',
+    nextSteps:'both',
+  },
+  retirement_trump:{
+    emoji:'🌱',
+    title:'Trump Account 符合您的長期資產目標',
+    badge:'badge-gold', badgeLabel:'主要建議',
+    primary:'Trump account（530A）',
+    primaryBody:'您的目標是替孩子建立長期退休型資產，而非短期教育費用。Trump account 在 18 歲前鎖定增值、成年後轉為傳統 IRA 的架構，正是為此設計。請留意：加州目前不跟從聯邦延稅規定，帳戶內收益可能每年須繳加州州稅，實際報酬會低於純聯邦計算值。',
+    secondary: ()=>'529 計畫（若有教育費用需求）',
+    secondaryBody:'若未來有教育費用需求，529 仍是最有效率的工具，兩者可以並行，不互斥。',
+    nextSteps:'trump_primary',
+  },
+  edu_529:{
+    emoji:'🎓',
+    title:'529 計畫是您的首選',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（ScholarShare）',
+    primaryBody:'您的主要目標是教育費用，529 的制度設計完全針對此目標：合格教育支出分配在聯邦層面免所得稅，可用範圍涵蓋大學學費、K-12 費用（聯邦年上限 $20,000）、學徒訓練、部分證照課程，以及每人終身最多 $10,000 的學貸償還。',
+    secondary: a => a.seedEligible ? 'Trump account（接收種子金 + 長期補充）' : 'Trump account（補充性長期資產）',
+    secondaryBody: a => a.seedEligible
+      ? '孩子符合種子金資格，申請 Trump account 接收 $1,000 幾乎沒有成本。若預算允許，後續每年也可選擇性投入，作為孩子成年後的退休資產補充。'
+      : '若預算允許，可同步開設 Trump account 作為長期退休型資產補充，但教育費用仍以 529 為主。',
+    nextSteps:'529_primary',
+  },
+  trump_lean:{
+    emoji:'💰',
+    title:'Trump Account 有一定吸引力',
+    badge:'badge-gold', badgeLabel:'主要建議',
+    primary:'Trump account（530A）',
+    primaryBody:'根據您的條件，Trump account 在長期退休資產建立上有一定優勢，尤其是孩子年紀小、種子金資格符合、不需要 18 歲前動用資金的情況下。成年後若以 Roth 轉換策略利用，長期稅務效益可觀。請注意加州目前不認可聯邦延稅規定，建議與 CPA 確認加州州稅影響。',
+    secondary: ()=>'529 計畫（教育費用備用）',
+    secondaryBody:'529 應同步開設處理教育費用，兩者目標不同、可以並行。',
+    nextSteps:'both',
+  },
+  combo:{
+    emoji:'⚖️',
+    title:'兩者並用最符合您的需求',
+    badge:'badge-green', badgeLabel:'主要建議',
+    primary:'529 計畫（教育）+ Trump account（長期資產）',
+    primaryBody:'您的目標多元、預算也有一定空間，兩種帳戶的功能定位完全不同，可以並行而不衝突：529 專門處理教育費用，享有聯邦免稅優惠；Trump account 負責建立孩子的長期退休型資產。不需要二選一。',
+    secondary:()=>null,
+    secondaryBody:null,
+    nextSteps:'both',
+  },
+};
+
+function buildResultHTML(r){
+  const s = strategyMap[r.strategy];
+  const a = r;
+  const sec = typeof s.secondary==='function' ? s.secondary(a) : s.secondary;
+  const secBody = typeof s.secondaryBody==='function' ? s.secondaryBody(a) : s.secondaryBody;
+
+  let factors = [];
+  if(r.seedEligible) factors.push({dot:'dot-p', text:'孩子符合 $1,000 政府種子金資格（2025–2028 出生），申請 Trump account 接收這筆錢幾乎沒有成本。'});
+  if(r.highAge) factors.push({dot:'dot-w', text:'孩子年齡較大（14 歲以上），Trump account 的長期複利優勢有限，18 歲後即轉入傳統 IRA 課稅框架。'});
+  if(r.flexNeeded) factors.push({dot:'dot-w', text:'您表示可能在 18 歲前需要動用資金。Trump account 此期間幾乎完全不可提款，是重要限制。'});
+  if(r.fafsa==='yes_key') factors.push({dot:'dot-b', text:'助學金是重要考量：Trump account 18 歲前不計入 FAFSA 資產，但 18 歲後提款計入學生收入（影響達 50%）；529 通常列為家長資產（影響約 5.64%）。教育部尚無 Trump account 的 FAFSA 專屬指引。'});
+  if(r.disability==='yes') factors.push({dot:'dot-b', text:'ABLE 規劃需求：Trump account 在 17 歲當年可全額轉入 CalABLE，是針對身障財務規劃的重要功能，目前細節仍待官方進一步說明。'});
+  if(r.has529) factors.push({dot:'dot-g', text:'您已有運作中的 529，教育儲蓄基礎穩固，Trump account 若開設，角色主要是長期退休型資產補充。'});
+
+  const factorsHTML = factors.length>0 ? `
+    <div class="section-label">根據您的具體條件</div>
+    <div class="factors-card">
+      ${factors.map(f=>`<div class="factor-row"><div class="fdot ${f.dot}"></div><div>${f.text}</div></div>`).join('')}
+    </div>` : '';
+
+  // Seed box
+  const seedHTML = r.seedNote ? `<div class="seed-box">🌱 <strong>種子金提醒：</strong>${r.seedNote}</div>` : '';
+
+  // Age warning
+  const ageWarnHTML = r.highAge ? `<div class="age-warn">⏳ <strong>年齡提醒：</strong>孩子 14 歲以上，距 18 歲只剩少數年份。Trump account 屆時即轉為傳統 IRA，不再有 18 歲前的特殊規則。對這個年齡的孩子，若目標是教育費用，529 的即時可用性更有實際意義。</div>` : '';
+
+  // Comparison mini-table
+  const tableHTML = `
+  <div class="section-label">快速對照</div>
+  <div class="factors-card" style="overflow-x:auto">
+    <table class="comparison-table">
+      <thead><tr><th>面向</th><th>529 計畫</th><th>Trump account</th></tr></thead>
+      <tbody>
+        <tr><td>核心用途</td><td>教育費用</td><td>長期退休資產</td></tr>
+        <tr><td>教育支出免稅</td><td><span class="tag tag-g">✓ 聯邦免稅</span></td><td><span class="tag tag-w">✗ 無</span></td></tr>
+        <tr><td>18 歲前提款</td><td><span class="tag tag-g">✓ 可用於合格支出</span></td><td><span class="tag tag-w">✗ 幾乎不可動用</span></td></tr>
+        <tr><td>政府種子金</td><td><span class="tag tag-gray">✗ 無</span></td><td><span class="tag tag-g">${r.seedEligible?'✓ $1,000 符合資格':'參考條件'}</span></td></tr>
+        <tr><td>加州州稅</td><td><span class="tag tag-gray">無扣除（教育免稅仍在）</span></td><td><span class="tag tag-w">可能每年課稅</span></td></tr>
+        <tr><td>FAFSA 影響</td><td><span class="tag tag-g">家長資產（~5.64%）</span></td><td><span class="tag tag-gray">尚無官方指引</span></td></tr>
+        <tr><td>ABLE 轉入</td><td><span class="tag tag-gray">部分可轉</span></td><td><span class="tag tag-b" style="background:var(--blue-light);color:var(--blue)">17 歲當年可全額轉</span></td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+  return `
+  <div class="result-hero">
+    <div class="result-emoji">${s.emoji}</div>
+    <div class="result-title">${s.title}</div>
+    <div class="result-sub">根據您的 ${Object.keys(answers).length} 個回答所產生的個人化分析</div>
+  </div>
+
+  <div class="section-label">主要建議</div>
+  <div class="rec-card primary">
+    <span class="rec-badge ${s.badge}">${s.badgeLabel}</span>
+    <div class="rec-name">${s.primary}</div>
+    <div class="rec-body">${s.primaryBody}</div>
+  </div>
+
+  ${sec ? `
+  <div class="rec-card secondary">
+    <span class="rec-badge badge-gray">補充選項</span>
+    <div class="rec-name">${sec}</div>
+    <div class="rec-body">${secBody||''}</div>
+  </div>` : ''}
+
+  ${seedHTML}
+  ${ageWarnHTML}
+  ${factorsHTML}
+  ${tableHTML}
+
+  ${renderNextSteps(s.nextSteps)}
+  ${caNotice()}
+
+  <button class="restart-btn" onclick="restart()">← 重新作答</button>
+  `;
+}
+
+function renderNextSteps(type){
+  const steps529 = [
+    {n:1, text:`<strong>開設 ScholarShare 529</strong>：前往 <a href="https://www.scholarshare529.com" target="_blank">scholarshare529.com</a> 開戶，最低投入門檻很低，可從小額開始。`},
+    {n:2, text:`<strong>設定定期自動投入</strong>：529 的最大優勢之一是長期複利，建議設定每月自動扣款，不需要記得手動存入。`},
+    {n:3, text:`<strong>諮詢 CPA 或 CFP</strong>：確認加州州稅處理方式（529 目前無加州扣除，但教育用途提款通常適用聯邦免稅）。`},
+  ];
+  const stepsTrump = [
+    {n:1, text:`<strong>填寫 IRS Form 4547</strong>：可附在 2025 年報稅表一起提交，或等 <a href="https://trumpaccounts.gov" target="_blank">trumpaccounts.gov</a> 上線後線上申請（預計 2026 年 7 月）。`},
+    {n:2, text:`<strong>等待財政部確認</strong>：財政部將分配帳戶管理機構，預計 2026 年 5 月起陸續通知。7 月 4 日後開始可供款及種子金存入。`},
+    {n:3, text:`<strong>確認加州稅務影響</strong>：加州目前不認可聯邦延稅規定，建議與 CPA 確認每年的加州州稅處理方式。`},
+  ];
+  const stepsBoth = [
+    {n:1, text:`<strong>先開 529</strong>：前往 <a href="https://www.scholarshare529.com" target="_blank">scholarshare529.com</a> 開戶，處理教育費用需求。`},
+    {n:2, text:`<strong>申請 Trump account</strong>：填寫 Form 4547 或等 <a href="https://trumpaccounts.gov" target="_blank">trumpaccounts.gov</a> 上線（2026 年 7 月），接收種子金並開始長期資產規劃。`},
+    {n:3, text:`<strong>諮詢專業顧問</strong>：兩個帳戶並行涉及更複雜的稅務與助學金規劃，建議諮詢持照 CFP 或 CPA，確保策略一致。`},
+  ];
+
+  const map = {
+    '529_only': steps529,
+    '529_primary': steps529,
+    'trump_primary': stepsTrump,
+    'both': stepsBoth,
+  };
+  const chosen = map[type] || steps529;
+
+  return `
+  <div class="section-label">建議的下一步</div>
+  <div class="steps-card">
+    <div class="steps-title">行動清單</div>
+    ${chosen.map(s=>`
+    <div class="step-row">
+      <div class="step-num">${s.n}</div>
+      <div class="step-body">${s.text}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function caNotice(){
+  return `<div class="ca-notice">
+  📌 <strong>加州居民重要提醒：</strong>
+  （1）Trump account：加州目前不跟從聯邦 §530A 稅法，帳戶投資收益可能每年須繳加州州稅，長期影響不可忽視。
+  （2）529：加州目前無州所得稅扣除（SB529 已於 2026 年 2 月失效），但聯邦教育免稅優惠仍適用。
+  （3）FAFSA：教育部尚未發布 Trump account 的正式 FAFSA 分類規定，以上分析均基於現行 IRA 規則推論，請持續關注官方更新。
+  </div>`;
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+renderQ('ssn');
+</script>
+
+</html>
+
+  <!-- BIO SECTION -->
+  <div style="max-width:660px;margin:0 auto;padding:0 18px 64px">
+    <div style="border-top:1px solid #e0dfd8;margin-bottom:32px"></div>
+
+    <div style="background:#ffffff;border-radius:16px;border:1px solid #e0dfd8;padding:28px 28px 24px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- Photo -->
+      <div style="flex-shrink:0">
+        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4QCURXhpZgAASUkqAAgAAAADAA4BAgAgAAAAMgAAADEBAgAHAAAAUgAAAGmHBAABAAAAWgAAAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgAFBpY2FzYQAAAgAAkAcABAAAADAyMjADkAIAFAAAAHgAAAAAAAAAMjAyMTowNToxNCAxMjozMToxMQD/7QCQUGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAFccAQAAAgAEHAFaAAMbJUccAgAAAgAEHAI3AAgyMDIxMDUxNBwCPAALMTIzMTExKzAwMDAcAngAHyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAOEJJTQQlAAAAAAAQkJ38t5EuJ02/JCpBVOV93f/bAIQAAwICCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICggICAgJCQkICA0NCggNCAgJCAEDBAQGBQYKBgYKDQ0KDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0N/8AAEQgBYAFgAwERAAIRAQMRAf/EAB0AAAICAwEBAQAAAAAAAAAAAAMEBQcCBggBCQD/xABIEAACAQIEAwUFBQcCBQIFBQABAgMAEQQSITEFQVEGEyJhcQcIgZHwFDJCobEjM1JiwdHhcvEJFSRDglOSFjSys8IlRGODov/EABsBAQEBAQEBAQEAAAAAAAAAAAABAgMEBQYH/8QANREBAAIBAwICCAUDBQEBAAAAAAECEQMhMQQSQVEFE2FxgcHR8CIykaGxFOHxI0JSYpJDFf/aAAwDAQACEQMRAD8AcyV9h44eiOhhmsdCGYjor3u6D8IqyCCKisxDUGXdUIEWKjQndUHvdUH7uaDJcPQZjD0GXcUHncUHhgoMfs1UYnDUyMfs9QeGGgC8NAJoKAZw9Bg2HoBtDQDaKihNGaIG0VAJkouQXSjQDxVJAWiqMgvFRcgPHRQGjoAOhoF3ioBPHUAWjoMRHRH4rQBlS4sdjofjUJXF3ddpcmSxVQQRUGQioMjHWcj8sNRRVioCLFQZCGhAqw0aZdxQZCCgzEFAQYegy7ig9+z0H77PVH7uag8OHoMfs9Bi0FAJ4aALQ0AmhoMGhoBNDQYGCgwOGoBvFQLyR0UFoqATQ0AXhogLxVJUBo6hJeSKhks8dFCeOgXkiomS8iUULu6KwZKiSE4ogDCgufJXXLmzVKQCCKkyMu7oMhDTIIsdZURYaECLFQEWGgKIaNM1goCCGgyEFBmsFBmIaD0Q0H7uKD3uKDww1RiYqgG0NAJ4aALw0AjFQCeKgEYqDApQDZKALxUAXhoANFQCdKADpQAeOgA6VMBd0qBd46ADJRQHSiAPHRcl5EoZAeiAuKARSoLsEVdcMCLHUBFiqAgiqjIRVARYaAyw0UUQ0UQYegzENFEWGgKsFAQQ0Gaw0GYgqj37PVkfvs9ZHv2eqP32aqMThqmBgcNUA2w1AF8LQAkw9AB8PQBOHoMDBQDaCgE0FAF4KBeSGgA0FACSGgBJBQKyRUC8kdAs8VZC8kdAu6UC7x0C8kdABoqALrUAstSRd+SurAqR1YBljoM+6qDJYqgNHDQMJBVBBHUahmIqKIsNAZIKAywUGZgqj1YKA64emB53FJGQw1QZDD0EL2l7U4bBxSz4mVYYorZna+lzYWABJJOgUAkkaXvUm2IzLURlzd2z97/dsFCO5CjK0xKvKWtZgiXZEsdNnvvl1A886szw6xSFSdp/ea45IisJ4sKhJIWCEKxUDXO8hmkYDc2y6mxzZgK5ze0+LWIjwY9nfex4zCDnlXEkqQBPEoVXtcMe5SMvYAk+NAQTbbMsi9o8TFZ8G3dgvfHxAxAHEMrwvqe6jVDEp1UgC5IGlwTf1truupMcszWJXj2T94vhWMkWGOZ0kc2VZI3UMeQzWK3PmRy5m1do1YnZiaSstsPXVzBfDUAWw1ANoKALw0C8kVABoaADw0AHhoASRUCskVAs8NArJFQLSQ1JCzx1As6UAJEoAOlAvIlQAKVJF6LFXZgVUqQDpHVGXd1JBFhqBiOKgKIqKIsNVRVgooqwUB1hqA0cFBn3NBmsNUF7mqPVhrIzXD1RR3tG96zhODd4Vn+0OhZW+zhZQJEvnjVs6R50IsR3i+LwjW9uE6seDrFPNxZ7dvbRLxRxI0jNG0kjxR5mCQRDOI1MZ8KyKHYGQLmN/v5XsfNa2XSNmrcDxikOzsCwAhQHk+coD1uWhZhvvbY2rESCx4KSWyMxLyOouVuqRqC4XzCIDJa9i+a+i66gSvHsNGCkaWVU/eE828NkLi4IVhZ9iWQ3FmBFlEPxDgYUkqCWkIyg6c/vEanW1xfYW5KCYFvtndfIeNbHbUm7aEE6AWAIH8+pXRPu8+8HDhV+zTxsQxW83ekhBb/0muqKFtcIVAvr90mutL9uzMxl1/wviEWIjWSGRJEYAqyMGBBFxsTa/nXqicuMxgZ8PVQvJDQLPDQLyRUAWioASRUC8kNAtJFQKSQ0C0sVAq6UC0i1JC0sdQLSR0Csi0C8i0AHWgAyVBeypXVgVI6yColaBljooqR1EHSOjQyR1cA6RUUVYqgMsNQFWKqCpDUBBDVBVioMu6oM1w9XYcle+H7ySwrNwfAysuJzCLHyqCGhjeMP9nifQCWRHBklTMYkzKCsjFofHq6mfwx8XetcbuHWxySBnLEKmioDa5Hmb6scpJy+Eel687RfAXLLcIRmLBRawsSf2djsQDcG4cEXFyTWETEmFCF5I3Hd+GVBzUkSZrnykZQCbnXUEnMdKmuG8c7uQRjnAZV0JzS941rtyypGP/e2wq5DcaqBEGOZjIWJJvcBmWPoB4Vkl0NxK58wbkN4nEoWBzAZ7DNpY5gTYaAIAquX/gVLXswtciN7Q9mVf7mwCi+zE6WAHkCunpvY2CMj4DJHmCaMRZtAdC1gP9RIudSQAP5AQ6F93X21T4CSPCYjM+GkIuCLtEWOjRi4sGtqNjyF7ZulLzEpaMu1FAYBlIIIuCNjXscJLywUQq+HoAPBQAaCgA8NAvJFQJyRUCssVArJHQKyw0CskVArJFQKvHWZCskdAs8dAvIlABloL3WOtMDRx1QdY6uQZY6mVFWOqDRxVFMJHVyDLHRRkirIMsVAVYqoIsdQFWGqCiGgIkFQat7We3cfCuGY3iEmow0Duq3t3kxskEQOtjLM0cYNjq2x2rF7dtct1jMvjhxHiTySF5HZ5XYvKxF2kllZ5XcjTxM7ljYbn+U1891EMOgiUEp4WOtlOYkks2niy7KDe2bVeclYPQdjy2Vg7razC5zAHcZW8BzA7EAi/I0wRDbOE8AY5w3/AHEyk7L94MDbYG4N9Nj0ClcZw7RXJmPstIO4LA54yyhr6NGyhTc7WDDMTyJba9zIuvqpTeB9nmIldcqG6ADKNCbDKLA7kZ9ANbMdOZk3ajSlLz+xLHKhIja6qrbE/gUX6XC2F9soJNgTaesa9TKJg4bioU1hcm9hdTYsu5bYauwdtMoAP3SQa6esc/VyUxnEpIUUtGRYXF/xvlKrnbkGZizfy+bEC96erkWBGK5z4m0JsTe9xdjqG8wBawt90WLayzh3L7t/boY/ADMwaWBu6b7wLKACj5WAtcGxt4Syki1xXu0rZh57wtGSCurkVkgoF3hoFnioF5IqBeSKgVkioFJYaBWWGgUkioFJYqBSWOgUljqSFJFqBWRKBWRaABWgvlUrcsDolAxHFQGWKooyx0UVEqoYSKmy+A8cNCDKRVFFWOtAgiqAiRVAdIqAwhoM+7oObf8AiAwy/wDw85RssSYrDNiFA/eqz9zFHqDYLPLFiL75sOvU1x1fyulOXzEkU6ve2l7XGh1/F8vMm21ga8Toc4ShL3AsRsMwY6i5IvtqAfxAkEam5GZlqIXV7KfZdNjW6a7uCQATplAyqPXLrrsLV4dfX9XG763SdJ66cOo+xXupRrYztcnkAAPjpe/56b18bU9ITPD9Bp+jqV53W7wT3WsGPxEn0G+m40B2GpubgHkKxHWWanpKR4NtwPu4YWOxUWIOhAykDXw2F1I1ItYCxtatR1U4c50K5bxw32UwBMrAEWOhUHcZem2XQLsNfKz10pOnHD8/skwGQo2Hja4IJKA7m/Plck22uT1rP9VaD+niVS+073YMNioykYEY3sF0v6/e05KGCjpbStV620Tu1bo6Whw77U/Y9NwbEXmJWLTxjRAq3NrgaDXnufz+z0/URqPhdV0k6W/gtH3M+K/9biokLNHLB3hFzlDI6gMVGlyHtmsDtuGJH2NCd5fG1I2ddyQV7HmLSw0CkkNAvLDQKSQ0CskNAtJHQKyR0CssdAnLFQJyx0Cc0dAlKlZCcsdAtIlArKtAuy0F9KlaYMRpQMxrRR0SqsCBKgJHHRDccdVTEcdVTCx1AVYqAgSoCJHQMRx0DCxUH4xUWFIe+vgQ3ZnihP4I45NACbpNGbDUWDaqxGoRn0bUHnqflluvL5PcI4aZH/8AIbf7fVj5V8+Zw6xGZwsHs52OzG9tLgXOvy3OnQ3HPpXCbPVWmXXnsR4YscHgFmzLmb8Ry7E8vgNhbrc/A66e5+p9HYq6l7MrmQHnoK+HEPu2lvfBcLYivRWry3s3LBxA6fOvZSuXz7zhKRYaw2r1RSIeebAS8OFcZ0Yy6xqzhFcQwY1Ary3ricPVS84zKlPeG9kicRwbplHeqCYzzvba/nt8a69PadO+WNesalJhyF7jmAMPFuIwMpRvsmi5bWMWIjD8/D+8QZcpvzYZbN+06aczPufiNeuNnaUsVe95MFZIaBd4KIUmioFJI6BWSKgUkioFZYaBSWKgUlSgSmSgTmSgSmSshKVKBWVKBOSOgXZaC+0StMmUjqrgxGtQ4MItUFVKijxx1QzHHVgMRpQHRKgMq0BBFQFSOoDxx0DCpRWQjoYVJ72uGzdmuNjpgJm1F9FAY6WOthobaGxutswxqfllqs7vlp2NwCgXK+f19cx8fk3t4Pbp1W92T4eLWtYfeFuZ5fn9cz8/Uvh9XQ08rz9lUpUFTuW3F/O/w3+tvl9TbMPt9NXFnUfYiPQHlXyqcvp6krC4awuK9VXjtmW18Ljr16cbvHqSlxDXqw8uWM0ZrFoluswh8cljXivG7104wguJIG0rNeXSdocwdhOwq4ftLj5QgHeYGXKbWyhsVhnYD/VoTp+Ea6a/sOh4+D8h1v5lzyw19V8wtJFRorLHRmSU0VEKyRUXBWSKhgrJHRCkq0CcsdAlNHQJypQJyx0CUyVkISx0CcqUCsi0CrLUF+otdEgwi1CTCJRIMIlGh0WqDRpQMxpWgdEqBhI6gMkdMgqpQGSOoDpHQGVKLAgSg0T28cBbE8E4vh0F3m4Zjo0Ghu7YaQIBewvmta5GvMbjNt6y1HL5Y9nMCDGGXYga+WhHw+ulfn7WfXpRZfYvAFitubDTy0+QFv8Afl4Na2IfW6WuZX12V4cIbADoSeZ9eVfF1LzZ+j09OK7ru7Pdp4YYw8sgRb2AvYseQXbX5DzppaUzLlq3w3ngXtP4fILLLlI3uDb52tyr6H9Ph4PWTLeOEdqoG/dzRuB/CwPztt8aRHazavc2bD8XVlveu0XiYea2nMSzbiK9ad0JFJR/EMdEBd5EQdWYAfma5zp9zrFphqqcbw0rFYZ43a/3QwubanL/ABEDWwvpXGNKYl378xiWkYnhAXik7gDXBYc3695LMD6awehvzO36roeJ+HzflOtjePj8kpLFX1XzikkdEKSx0QnLHQkrKlFKSJQiSsqUSSUsdEJyx0UpLHQJTR0QlLHQIzJSQjMlZCUq0Ccq0CrrUF+xrXRIMItRTKJQHRKoPGlAwi1AeNasBuJKoYVKyCKtAZEoDLHQFRKAyrQFVKNKm7c+2yPDTtAYC0QukkrXKtyYADXJyzAPca25V+f1/SdqXmunWJiPOefc/T9L6HjU04vqWmJniIjj3uEu0nslk4WMmZJMOVBw8iEkGIaIGJ/Eo0OpuCDfXTwU6iNSfKXo1uitoV5zhuXsn4YGcNblv9dLWry9VO2Ho6GN8roxHCXy+Eb7Hzr5tY3fctbYPAdlMKt58biGFrgXb7un3YxYtt+BBte4bevo01cRir5t9OZnMpHhfaTsrOZMOMTM8sMTyyBHzd1En7yVwGyog3ZpbKvO1e2sasxntl4bX04t291fczh7O4XxnAY6Sy3HduSjLl30AAOW+pUsASNRpXz9TXms4tG/tfT0tDMZj9t4XB7Ku0Ezp3UhLldM3M+teaNTunZ11NPtjI/tE4/Oto45e6J3c2uo+PzJNPWYlK6UWhUeFx/AXlc4/joaWPIJssuZY+8bLGrkK6R9691UmxdtBcivo6drzGYrOPOImXz9WKxbt7oz5TaIn9Fh8L9mHD5Ss3D+IZihBGV8xW/iGisrIeYuB6am89dmcf2ZnSmu8w3fG4dlkEslizQRxO+1zHI+SwA1LtOdNAD5HT6Wh1caUxExnMxHu+8vma3RzrRMxOJrEzjz+nD2SOv0j80UkiopSWOjJOWKiwUljoSTkjoYKSpQKSpRIJSx0CcqUCUqUCUy0QjMtZkIzrQIzLQJSpQKulQX5GK6ZSDcKVFMotAW1UMQrQHVaBmNKBuJKBhEqAgSgMq0GYFAZFoDpHQMRLWZac+e0bsuGlhhIucsneHb91ZS3pfUdQR1r8HrVnT1Jp4xMv6V02rF9KL+cQ539obG0+DJZ0QB0cqAqswY5E1J8IUXOl77aVqnMWZ14zXHmw9imJtZSdc1j8LVep3l5OijFd3U3AOBLIgB5/XSvmy+nkjx73ZcPOVlmeRgGDZLgqba6qdDy0PQbWr06d5pvDja1bfhk7w33UeAHEx4uXDtJPHLFiFDvP3Ynh/dSdz3vd5l6Wym5upzvf6NOrpG++fj9cPnauhNvCMfD/Kx8d7MMJNiHxjRusvdiORrlY5YxfKrxfdZlJLJIAsikkBgryo/n1rxqbz+svRp2tpUjTrjHlH1Z+yns4sM5FvCR9f0HwryaEZu7dXb/TPds/ZrDimk7xWa4IIBIOXnbzPUeIcq6RSItlzprWiuFWn3ROCtjo8ae9SWOWOYxLKiQSSQlHi76Lus7qkkUcgj71Yw6k5fE+b6NeprxOec843h5L9PEzmseGON8Tzv7W0p7HsPh8W2LwzFDISXjS3dgm2Yom0eci7BMoZtSCSSfF1GrFrZh6dKvbTtxs3CTDXClvwZit+pygda9HS1nUmsf9o/beXj6i0adbz/ANZ+hKSOv2r8UWkSqpSZKBCZaISlWilJEoFZUohSVaBOVKJBKZaKRlWpkJTJRCM6VEITLQIzLQJSrQKOtQX4q10YNwio1JpFooqpQHjWgaRKBpEoDxLQMoKAirQFC0BESgYRKA6igMiVkVd7ToFhxuGncfsJ4J8O7H7qTEwmMufwq6oEBOlwetfm/SenFbxqY52+Ph9+x+u9Davdp20s7xOY93j+k/y5v9p/cd5MoAR8mdVOl7Plbuz+JQp1sToL9a+R3Zxh+g1Pyw0DsYRHICP4qupu8ulXEOp/Zxxi4UH0ry4erOzoPsyAyi+t+tejSr5vDqzPg2mPhqW0UD0Fev1ceTxesmGvdt8QsUR1AvoANzz0tXk14iI2ezps3shvZ7GXdZNtLWqaFZmYdOqtFazDbOIjLID561vUri2Xn0pzU0uBSQAlVb1AP6iu8Vy5TeazjLHEcHQDRQPQAVjV0oxlaaszOMtU4xEAQPM/0r6noukZmXyvSV57YhEyJX6J+fKypRSkqVqEIYhaJBCVaNFZFpkKSrUwmSsqUyhOZauVISrUSScq1AjMtQkjOtVCEy0CMy0CMooFHFQX8i1tmDMS0IMoKLI6CimI1oGY1oGIxQMKtAdFoDKtAZFoDKlAaNKA6LWQZFoIvtX2dGKgeE2BIuhYXUPYgZhzRgSjgalGa1jYjzdRoxrUmk/D2S9fS9ROhqRePj7Y8XK3bHsKJsEsXdrJNBmyM4Akw8ikiWPvAQfCQyMpuNCDX4jNqWx5bS/oFZi9c52nePjwoXgWOtKvQkV6L7w89ZxOHR/YfiXdlNdDavJD24y6I7MdphlGorvW2Hmvpthxfbc/dQZmPLp5k9K1bVniHGNCvNlSdoPbMuFxrrjjkiRQY2sSpzA5gBuz3Fiq3Nsumtef8Wd93ujTrOn+Hls3sz9v/DcTKwgk0Xk6PE3xSRUdfLMouBpfevVTU9XbeHh1untenLa+K+1/h5xCwfaIu/kBKQ51Mrgb5UHib4A6VNTViZ2hnS6a8V93iVwPaiSCTLIfC5OS/LmF9bVzrqTWd3ovo1vGY5bb/wDEQYV3tqd0PH6rta9xCfPISNgAP1vX3fR0bWn3fN8D0jtNY9/yKSrX2XxJKyLRSc4oI+dKuTJGVagTkFFKyijOCkq0QlKtGoJSihJKUUTJGZaBGZaIQmWgQmWgRmFApIKgv6MVtk1GtGjCJQMIKBhFoGIxQMxigYQUB1WgKgoDotAdFoDItTIMoqAqigzAoIPiPYPBzSGaSBWkNixzSKr2AA72NHWOXQBf2qvdQBqABXnt0+na3dNYz54eynVa1K9lbTEfx7vL4Pnr7YOGjCcZ4jCNkxkzqOiTt9ojX/xjlUDyA61+d6inbe0e3+d/m/S9LqTbTrPsj9tvks/sXj+8hjYa+npXxbRiX3qTsuHshO5yqdm2IB+V/wDFc+5q0C4/2nQ4DGGDEskTNYxmWRUzrYXMYYjMAWANtjvyrtpZ5w4XjuhtObBY4XMkT36FW3+Nd8Zcs6ldsFsB7v8Aw9pBKhAI37uURi3O6g6D866V088pPU3rtMfs3bhvZDh2FbMncK43IKlvO7bk+ZNLViHLu1rRjE4R3a/iEE5ECyKZHvkyMrMpAzBioNwARuRb5157Yl1p303wDwjGt3Sl9Gy+IefOs0tl2vCa4f8Adv1P1+d6/Xej640s+cvxfpC2dXHlAkgr6b5ZSVaKTmFEwRmWio+cUCUooFZRRCktDBOYUUjMKIRmFDBKYUCUwohCcUIITChJGaiE5BRV/wAS1pnByMUUdBQHUUB0oGUWgYjFA3GlAYCgyjFAzGKoaRazkEUVAVRQGUUHtB6BRYfP73yeHLF2glKizYjCYPEv5m0uEB/9uDUfA1+e62IjVn3RPy+T9J0Mz6qPfMfxPzKexTtOqt3Ln0HrtXw9au+X6LRtmuHTnZuYIVt924I8q8mXqmE97W/Ylwzj2FjGLhVpsPmfDzqAJoC6hXymxzRyKFDxNdHyoSLohHu0dTtjZ8y9I7vxxmPvifgrjsH7JMJhWMDxsxsgSWGRopDZ2JJsVsO7KqVQ2JQnKmavTFovOX0/6bWikW0L5iPCefouzsv7P+HKmZzix+2fSSaUkxgtlF0drRsoDA5lk1AbKxZa7RpV5nL5urqekIntiI48O2fi172iey7ASYTEw4VsQmJmiljhxEkk0qwSMZO7m7tpgHEZMbCMlC6rlLJme2ZpSs5enTjr9Te8xWPdH8R+vMMPYV7u3DuA4QphYy2InKvisXMe8xWJdQ1mmlsCbF3bKLKGdyAL15ta/f8AJ4sRW2K8bRnxnHjM+Kc7RLl216Abk7AfE6V4a1mZxHMvZ3xFZmeE/wAPwmRFU7ga/wCo6t+ZNfvtHT9XSKeUPwOtqesvN/OWbrXZxKTCgSmFAlMtBHzigRlFApKKIUlFFJTCgRmFAlMKBKagRmFEIzUQjNRSEwoYJuKC/wCIVpk5GKBlBVBRUBoxQNIKBmMUDaCgIBQZqKBmIUDiCsj21AZKAyCiw9IoP1BwF75nEln47mRSO4wUODL3uJHhmxUzkdO7bFGIg65kPIividfXFot5x836L0dOaTX25/WI+iq+El43WRNCu/mK+PauYfbpMxOYdK+zn2hCVFGYXAsQTbWvm3pNZfTraLVXp2a4790g6WsRWqzhwvGYw/cZ7OXk7xdjqPX656V2jacmlrWrwksN2hxkYCqWI5XAb9R6czXojX1IjaXS3q772rGf0SmBjkmfvJmZn0tcWsBtYC22tc7alrTm0ud9Xtp2UiIj2HONcVCKdbaWFcLWeWlWudmIWxD9+/7qNiIh/HINC/8ApjNwN7yX2Mev3PRnS/8A2tHu+v0fH9J9TER6mvP+76fX+7bmFfpH5oGSgTmFAlJQJzCgj5xQITCgTkFAnLQJzUCU1AjNQIy0CUwoEJqBGagQnFAq9QdARCtsGozQMpQGQUDCLQMxigYQUDMdAUCgLGKBhBQMxmsgxoMkoDrQemjTlj31Pe4/5EMPw7AyIvEsXleWchHXhuCLhGxDJIGQ4iTxdwkiNGFjld1IESy8bW3xDVY8Wq8b9mZ4lhg2YfaMzTRytrmkc3cSMNcs17s2tmytZstj6Op6aNbT7fHwn2vX03UTpXz4eMKZn4M8RZJEaOSNikiMLMrDkdx5gglWUggkEE/jrRNLTW20xzD9jSYtWLV3iTnC52jbMhynf1rFqReHSJ7V3+zD2qC4jlOU7Ana/SvDbSmrtFos6U7HdpIZVsSp9SK3p2jxefUpMbw3OOSPa4r1ZjDyT3AcQxkaAkkaCuF5iG6xMqwxZbH4gwxsRDFY4iUcr6iJDsZXHqI18R3RX9HR9HOvbNvyxz9HHq+rjQpt+aeI+awIcMqKqIAqqAqqNgoFgB6Cv19YisYh+Pm02nM8vGraAvQKSmgRloFJaBCcUCEwoEpRQJyigTloEZ6BGagRloEpqBGegQmoEpqBR6DoCOtMGY6BmOgYSgYjoGEoGI6A60B0oDJQGQ0DCVJBgagIlAUUFR+8f7wsHAMKrWWbHYkOuCwxNgxQDNPMAQww0LMgbLZndkRSuZnjzLT5Ne0eTEYuSXG4mR58RNMXxM0hBaRpLDMdgFWyxpGoVI48iIqJGqrxtXxarO7uL3E/aUvEMG2Bma+LwCopLXJmwx0hlublmWxhk1LZkViF75L+3R1O6uJ5hZhf3tB9ikPEEJP7LEhcseIVbmw1CSrcd5GDfS4ZbtlZcxvw6npaa8b7T4T9/wAPd03V30J23jxhy32y7BYnh8ojxMeS5IjkHihlsL3iksLm1yUYLIoFyoBBP5jW0L6E4tx4T4T9+T9Xo69NeM0nfxjxRcBF/wCtYzDrNZbbwHtZiIDdJGI5i51/z5jWudtCs8LF7RysPh3t1mK5Cr3Hlc/PQ6jrtXH1FuIXurykuEdpsbxGeLDIO6WRwpcnMyruzBBYEqoLAMeXTb0aXQ914raXk1up7KTaI4dDcG7Px4WMQxAhVJuSbs7E+J3bTM7nUn4AAAAfqqaddOvbXiH4zU1Lalptbk0xrbmETVAZGoFZaBKWgUmNAjPQR81AnKKBOWgSmoEJjQIzUCMtAlNQJTUCE1AlNUyFJKo6BStMGY6BlKAy0DEVA0goDpQHWgOpoCoaAy0DCGsg6igID9eVBy17effiw+DL4Xg/dY7FqxSXFNmfA4ZgPEEKEfbZVJClYpFhjbMGlZ4ngMVxLxTtHi+IytjMdPJi8TIO7aaUqGyxO4WNURY4ool1YRRJHGGeRgoLsTMAL8JDIVbVSLMOoI2Bvfn+mvTWBFez7tXiuBcSgx2HBaTDsSYyxRcVhpLrJA5BAyyqNCcyxTpFJZjCt/PH4LZdY3fYn2f9osPxHB4bG4VxJh8TEssT2sSrbqynVJEYGOSNrNHIrKQCpFe7uzGYQ72m7FRYmJopo0ljcWZHUMp6aHmDYg7g2ItapmLRieG62ms5rOJcte0P3YZsOxkwWaWH/wBEm8sY/kdv3qj+Fz3lgbNKSFr4XU+jsfi0f/P0n6v0vSek6z+DX/8AX1ho3CuxrNcXIIJUjUEMNwymxVgbgqwBBGtfBmbRmJffmK813ht/BPZ+o1Zibam56delKzaeGLOm/Yv7K/synESJldltEhGqId2YHUO/TdV0Nizgfpel0PVRm3M/s/J9f1Uak9lOI/efoqPtz74WCwHG+IcKxuGxEa4OTDqMXDadGXEYHDYzPJCAkyBWnaK0IxLMUBsuay/Q5fFnZanZPt1g8fGZcFiYcTGLBjE4YxkgELKmkkT2IOSRUaxGlUSzmgC7UC0hoFJaBKY0CMxoEZjQJy0CcpoEZjQITmgQmNAlMaBGY1AlMagRmq5CctJCj0HQERrbBqM0DCCgKDQMw0DqUBUFAZTQHSgKtARGoA8Y7QwYWGTEYmaLDwRLmkmmdY4kXqzuQo10FzqbAXJArI5r9oP/ABAcBCWj4XhpuISDQTy3wmDvmKtlzqcVKVtmC/Z4o5AVyzbkQzDl/wBoHtx4zxgOuOxr/Z33wWGH2bBEFArI0SMZMRG2rZMZNirMTYgBQNY23TLTEwItt009drdb8upqob7K4YhZkZGUrOwUMCPCwSQMt7BlJLDMNLg81NpDSXTDAWHK46D+E8/j0HrqVoge1fCBImUAd4t2UjfW14/STfW1hlOwrneuYaicOk/+HD7ZmhxcnApm/YYsS4rA5m1jxca95iIEVm+7iYFfE5EACyYed9WxLkY07Y2l1l9GVhvXdl43CwdxTuGh+0nsBw8R9/iJI8LIfBHiMyI7uFZlisxH2jwq7d0bsEVypjszDya+hTW2tG/n4vodN1epoz+HePGJ4/spDhvbuLAYqEfYsdxe6NKJOHx4ZcNCVays8mOxOE71yLFAgCIxa9yiOOPT9FXSnMzmf2j2vd1XXW1o7ax2x78zP3+7p/sF7ScJj0cQF0liVTNhp0MWIiDjwsyElXjY3UTQvLCWV1DlkcL6/F8SYfMz388D3Ha2U2A+18PwGIJ/iJOIwVz6fY1F+grOcWc/BU/Z3jsmHlWfDyyYeePQSRO0cqAlSUzoQcjFRdScrgeIG1q7RLk6T9n/AL6eLiCpxGAYxAADPCFhxOg3aPw4eVj0X7KB1arhc+bo3sP7auGcSsMLikMp/wD28v7HEedopLGQDm0XeJ/MajUS2+Q0UpI1AnM1AjMaBGY0CkhoFJqBCegj5zQIzGgRmNQIzGoEpTTISmNQJSmqFXoOgI66MGY2oGozQEFAzCaBtGoDRtQHFAVDQVj7X/eV4XwT9niZGmxZAZcFhgJJ8rGytLdljw6HUgzuhcBsiyFSKmRyn2t9+3jWIZvsiYTAREWTLH9rxCm+5mntA2ltPsiW11bQ1DKn+1nbjiPFGjbiONxGMMesYlIWJD4xnTDQpFhkkyu6mVIVkZDlLEWFMeKblsNw63L66fna/rVDyp5dPz8vPc20tYeVUa92o4jLECyDMBr0+Vuf6VicwJ/sf2pGLhWVdG1SRNLq66G+v4tGA3yOt72q1nMNSlJsWyktfrYZVtrbmFU8r6lvMbirIDHhyd776jzvvvfe1+h6GqjXYeMzcNx+Hx2FOWXDzxYyCzFVaSGQO0TMuvdSkGOUAWMMzLrcivNbacu1ZzD7Y9hO1kHEcFhMfhiTBjMPFiYrghgkqBwrg2KulyjqQCrKwNrV0icwNhWMC5NgBqSdAANyfIdaDjjtd7ZHxvHHjkjj+zRJkwcbnElsjlW737Lh4XkxE8zwh8mndIirmQ96X9Uac0iJ8/d/LfbE19remwJClijhbBnkki+zrZRZY4oGYyKtyPv2Op51q0RMbfX+zjHLnj3kO2eJ4PjOCcWwmYTYPFyLKi6HEYSWIHF4RhmQOJVRSEdggmSJjYxgjzVr3ZejmDn/ABKeFxYrBcA43h2DRtLLgwyah4sdh/tsMmccomwMqLyJxBNxazcrxhx8cOSsbh82SaO/7RVYgC9mNr6AG+u4F+Z01I68xlx4lI4XDnL4rA72ve1tLb7+lwACL61pH5ogdCAfIi/5fHS/O1BYHZX2/wDF8FlEeNkljX/s4r/qYzf8OaT9sijkIpowLetFiV69iPfFw8t1x8D4ZwL97AGmhbYG8du+j12C9/p+IHQ5w13Lp4H2mgxcSz4aVJomvZ0PMbqwIDI6/iRwrLzAo0LMaBKY0CkhoE5TQJTmgj5zQITGgQmNQIzNTASlNZCcxqhOU1Aq5qi/0rowZjNAzGaA6GgOlAyjUDEZoDq1ByH75nvPS4SX/k3D5GimyI+PxMbWkiWVc0eEhZTnileMrNLKMrJE8IS5mZoudrK5UwGOLDa4Ny2o1uS5JF73JYsb6km5ub0iQTEcLC+IfdY7c102253JB862iQwuFAtod9R+nLp+vnVgOuB9ept8NWPLlvzDzL8P88v0Hx8qoQxkFzaw18t/h0+F/u1Ewi+zHCThsQ2X9xiLXt/25h91tNMrrdSSR4hENc5rERiWm5NDdhfpp5dRy26G1X3hiOIXtbT+nw0BsdNj5qNW0ILtbwvPEx3aPxjrt4hbnmXUbElU6VyvGYaicO1P+F57WO8wmN4LK92wkn27BqcothcU1sTHGB4mWHG3nd2Bs3EEF7ZQOdZdJds8VPefsh906yHqOSfHdvKw1ua6xtuORPeJ7DS4efDcShB/ZTTYbE5bgiKSYshzDVQqPCza2IvtXvjF64+LdZxKW7L8WQhZHY5AM37Rz3aleZzHKLc73+PPz0vOcMatMbw1X26+zZ+JYYGO7PhpC9wNCzhiwv1zBrjkD5130cd0lJxCovaP2wZuw2N4fPcS8N4nwyPDk7mOfGAhLaAGKMYlMoH7sKbm5I4dXXGLR4rPLnvsdjM0AB/A5W9xsfEPzYgf7159OdnC/KcjvsfTlp057jXcC9vgerBeZuf9/S3prp0zbXsAaeMx+tP0v116fECiYGhsPz05nlb9dv8AFEw3v2G+1l+G44qxvhZsgnXop0WcAfihN+uZM67lSuGs4duSv9cqrZOVqBWVqBOZqBGZqBCc1AhMaBGY0CExqYCUpoFJWoE5TQKuaC/4zXRgyhoGIzQMoaBhKAymgNG9An2m7Tw4LDYjGTnLBhYJcTMQCSI4Y2kewAJJyqbAAkmwAJIqWnEZWIy+QPHO0suMxM+NxJPf4ueTEygsWyvKxfu1JN+7iW0UY2WJEUaAV5oVI8L4upOhOg0Gtraknffyt89TWsmG68MmDLbl05j/ADoWB3sOZUmusShyHD5fDc6Wvcep5abA9dV8jWshoQHn1tytfn05jlbRT1oMXw42tyHK/p1NzceV25ZaoH9kBsTe3LmDfc7jU/1G1hTIJPgwyMg0JWw/lYEZWFxple5H+kbWNZnhYe4PHiRAw0OuYDUBlJWRdvwOpX1/huRWYDJbn0PXXrqfW+w113+9WkYv5eo2HW/PnbkbHck6VFMe7h2+PA+0vD8Tm7vDvMMLPouU4LHkQMWLEZYsNP3WIdrqf+jPI2PDiXSN32ZhwuX1vqed+f510mWlOe2ni0OaXBSorxTqksgYmxLDuCDYg5QsMdwNyfgeWvq309OL1nzj7/V9PodGupae79FcYD2PYMTfacIZBJK4eWKWWWdSQPC0BlkLwBD92OOWJUuTG+Ga7N87pusmLRGrx5/f0e3qukzSfV/o3zsAv7XFQP8AeCQHIf4f2y5V8KLZQBlCiJVFk7nDWKD6Gv1Pq9SLxOYmHz+n6Xv0piYxMTHw/soX38uxUeH7NOFy5v8AmOGmuFynN34zXG+YRuVudcqqNQBf12141qTNeP8ADw2pak4tDhjsBJrKvUIR8MwP6rp/bXjpTzDjdvb8Ufulh8IRTmYKLGQ30MhB8WS9l8iL3sCO7l7ENjGt/vt+eljt/tRX7CG/odvz6fp5czagYfTSwItp8vL/ADufWsyIrvcs6+cbC+myuDz/ANR+XrUHdvsV7TfaeGYZi2Z4l+zya3N4rBb+ZiMbHzJqrDcJDRorK1AlK1AlOaBCZqgRmaqEJmqBGZqSEpWrIUlNAnKaoWY0F/RmujBmM0DMZoGUNAeM0DAoMkag589+7twcLwF4FbK/EcTDg9LfuvHiZwb/AIXiw5hbyl8653lqHzt4VwdpTmOiAnxHYkbhetuZ8/jXKITLasDw6OPbXW17fncD9DpptbTUKn+G43UHfz32A2tc2HrcN666RsIlFs3MaE6CwuMpGp0BCiwsbnW2pqqLEw/Ly8tNRzBQXt/EdNKo9Z9QN99P6/h3vffdlHKmR+Guum/W/qed7HXfko60H6SP8OxG22m/pewuSep8qCMw7lJ3TYSftU6hhlSVbcgP2TjU3LSmwtWfFUuw289vK+3LQX8Ot76nxWJFyjB5dj52N9+WxOl7j8lv9wrRMtV7dcNDxByAQhMbi3/bkNrN/wCRAsbffbTcnnePFusvrH7qvtnHE+zWBx08hfEQQNhcazZQ74rA/sZZWVTlDYpUTFKvh8OITQXrMTtu7VjM4honvR8JMnD5+KpJJDiMJF3kWQq0fQJMjJeSNiwVgCm4IyEKy/Nv1trR6uYjtz8f1fpOk6WKWzFpzifdx5ff6tH91n3kY8fD3bqkc1lY9RmG63+/E9iyODbcHVTb52v3aVsTx4S+jp9mvTvrz/ur9PZ5T84l0XxLgIlZcRCQmJRbBx92RL37uUfiW+qt96Mk20Z1fh6yXGlopacxtPP37EN7Z/ZLD2h4TiMDKzQPIgyTKuZsPiIzmilKBl7xUkALRllEiFlDLmDD3aerOnPfX4x5w8GvpRaJpPvifJ8r5ewmM4TxKbh+PiMOJjjP3STHKhb9licPIQve4ebK+SSykMHR1jlimij+1oalbb1fndWk0nttynTr/ixH+P8ATYW+Qr2PPhGcTJFvW318z8LetAxw+PT5fX9uvkAaIwmm1P8Ai/Ug6c786wpDiItJGdLeJfnY36fhGnTlqBUkdI+6l2p8eIwpOjIJUHINGcrj1ZZFJPPu/KtEbOiJHouSkrUMkpXo0SmagRnagRmagRmaoEJmoEpTUCkrVArIauAuxqC/UNdWDEZoGEagZjagYjNAyDQeBqDhr/iGdoA+P4ZhCxyYfCT4p0DWzNi5hDHcdVGDlGa1wHIUjOxHC/LXg524YxcKBoBbKBawA8rW6f11qRuQlVwdiNTfrf1O5Fj1Ivr6WvrAzSSx8v6eXPUAk87r51RPcJnzeHUaDb+m9r9T5acqIbw+J2vdQb35ZSb3+V30Ftt9KsKZdbX00BJBttcDTmTa4v8A6CaAiODuba6bHW/O/Kw001KjSxvRRctttBqbE20OtidNBbxHUk32tVhEJ2njPdrKg8cDCUADV1AYSKBa15EL87Aa7gmsz5qk4cWrorqQ6sA6sNmVhfMORBW5v00u1xVHg/ENdNRpvrz5HmNr73sGBaAU8AYMpHhYWPUhgy/e0tcHb8VyRcgEyUy2/wB132zycLON4bIzdxipoZiABZJsOck7jTMe+gWEtmuojwg+7di3j1pmNO0Rz95/Z9ToIrOtXu+58H0S7NcYwvE8K+HxMUU+HnjMUkTqrxyxuuVlZTpZgduW4Oxr4NdTyfotfSx81AdofdU/5PiRieHtI+BOoBLST4M8ldtXngIsBL/8x4QJTjW7tZPpadqdRWdPU5nif4mPa+ZNr9Pbvpx4x7PKfvnddXs17dd5GMxBYN3b2IYBl3sQfj1GxAIIHxNSltK00tzH3n4vsRFdaIvTid/7fBaCS5SGGhI35MOh8xXWt+15rUyr/wBs/sWwPHIUXELknw5dsLiU/e4dpFCuAfxwygKJIW8D5I28MkUMsXp0tedK3dX9Hl1dCNSMW+Evnb2x7I4jAYqbCYpcksLlSR9xwRmSVDpdJEIZG0NiQwU5wP02net6xavD8zqac0tNZ5a1xGO422IO3wt0/F0vte9rDq5vUOUEHTl1/Mc7/wCbWFpIjxISTr+o6j4afp61kLcVk/dno/p+FgRp1FtND63qSLG9inacYbiOGdmshfIxuPuSo0RJ8gXDnzS9aSXaUrUUpK9FglK9FJTPRSUz0CMzVAlMamQjM1AlK1ApIaZCshqABNBfiNXVgxGaBmM0DCNQHQ0Bw9QeTYlUVnc5URSzMdlVQSxPoATSZxuPkp2u7cy8Y4ji+IzZv+olLxq//Zw+2HhIuQO5gEaEDRnDNqWYnzR5tTPkYweKC3C2253HLbMCD57f1vsMJiSDre259NLjTXw6anz3oDwvffcEm2trdfQWv5hjVEngx4gbkG+tthuDpqSeRvocttyCaiQjmIdhaw6Frmx1GYgC5tmuQo32F6LJ4TdNtDaw6G+pH+q1vI0UESWvy1ttvvzuOYbf+LbU0Dsa6DXn1Hpc2Px31zDyqgjxXBvex3FubCxvyzNpoD4QOVBr3Zpshlw19YTmjtfxQyElCp28Dh4wBfKqRkkBgKzHkJdH0A8rAdLHoNOnkTbflUfjIPiRb+nrvbl4hlvtaiNQ7T4lMPiYMUyu8OZDOsQHeOkZAlRL2XvJIAUjJsCRfXW/DUrnbzj/AA9GjqTS0Wjwn/P7PoDwHsZj+CjO06YrAWikweLTMDNC65gZlsVjkClLWYrIDdSDeNPz0dNN8zSfxf8AHz90+fsfs56qlojMbY/N5e/2e1fnYD2gxYyMZHUnKPDcG4IvcdQR8CK88Wz72b6U19xrinZWEKxiiSMs2diihczfxGwFyetL123SmpMTjwgA8alKhDbTY9K83fMRiXpilM5PYbE6DrVrLhaMzspn3l/Yf/zSAYiBb4/DIe6IsDiIbl2wr3srG5Lws2iSFluizysPp9F1M6Vu235Z/afP6vldZ03rY7o/NH7x5fRwlLEdbgjLcEEAEFb3DBgGQrqCrC6kEWvcV+py/NEcfPYEaDlv6W5g5db+hGuwCZRHYVr3+Pn6WB9flfresgXFWt3Z0vn8z+EjXe+p6kacqij8Pxn7S2wGh9D02PQXH61YR3h2I7QfacHhpyQWeJc5GxkXwSf/AO1aqsJKV6KTlegTlaikpmoE5WqBGZqgRmagTlqBaQ0Cz0AWNBfKmurBmM0DEbUBlagOr0BlaoNF94PFlOAcbYGxHCeIAG9iL4WVdD110rnefwy1Xl8ssA9sqIdjckczbVjzvb5C3xxCNiwqHnextp/m/wCWxsN6B1DrofPUbna/xuVN7a2qqLCefnz0vawO2wBOU28upFaEhgnHUC+vUnTew305cyBbU6lHbGWlHXKDqddN7W0t91QPOoiXRtByIG+97adPKx/1XtveqxmUgH+3TbT4Ibm419bAzgpdgLjUWve3LQ2GgsU9bedqB2wtf63udQSfNiNSTblQQHaRO7aPEgXMZaObqYHyh72OmQhXsNlRhre1SfMSwvpzzXAtck2ttY87/wAW+mYZRaoBKu1uV+m5vtzt0OmthbQ3gge1GE7yAi3iUZ1tpqgJNgdTdMwGv41OpsK523ah3P7h/t2TFcHi4XiyrPgQcIquBZ8KB/04ym91jhKwa790Tzr8/wBVHZq+yd/j/l+l6OIvpRjmu0/L9m78d9jkfDW77hZMMRYuIASUiYkv+xBJyxlif2Q8IvYBRpXjvE2tNpneX2tHVjsik1iIjy8lgcG9pYkhXvVs/wB17cj18gakam26/wBPEz+EqeO2Ou19D9b15LTudmOEvgcXm8Q2NSJYmqWSa4rr3OE1cj+9v7FFjLcXwqlVdh9ujX7qu3hTEgchKxWOW28ndvlJkmev0Ho7qu7/AErfD6PgekOm7f8AVrxPP1c6jsUrh7yTd2u7rHh2BIuTpHipVyga5g7XudrV+h7Ij7/s+Gh8fhcFADlneVyDlARTrlJF8sgKjTU2bfS4BrP4fuVa5xGa+QnkxPlor7X267c/M1ykZ4AELmPPW/r5+lhbfTnpQdVe7J2o73ByQE3OHkBX/RKL2+EgcnpnFaKrbmejROVqKUlagTlagTlapISlaoEpTUCslAs9Au9AAmgvdGrqwYjagZQ0BlNARWoDK1TORzF/xB+100HB8Ph4yVTG45Ip7btFDFJiFjvyDTRxOeojI2ZgeWp4Q3XiXDfAIrDXc6nyG/lqfUfqKxDKbixQBsLfDQfH5CxrQficm5/tvzuNuhINgfI0Udk0/P8ALl5akaeY3NUZ4eYgj15nTrbltt6AedkD3i2IIeNumZQLaXFiA3XL06HbnUlU9w7GBlG19CPPTXqPFluNeY/irUB2UnTYjrqL2DAed9UvtsbAakhhA3y11tsCdx0+8D/4igkFl/TfyJJva1rBgT0OVPOiM2QMCpG4Oh1FrarvqL6Wtcsd9NLJhE9n4jHfDNtF+5Juc0GvdrewX9k2aKwzDKFbUuDWY8hKW2356WN7c9tb8/vEjw3I8KkZRCaEW1s3lbTcje4sCNdPDoNzWQT2McOxC8Ziw2DmWGaYyDDh8wjlZI2nTDuy5u7LKkkSyEOBMFFjmr53VacTSZ8n1ug1e3VisziJ2d3dm/a3i4FEeOgbwnLIjb6aZlIuLjmBodx0r89MzG8P10aUZxH6trPamKTXDqrIQLg2v+Wo9CK4zbPDrOniN5OYeXMDlHkR0rnPDlM77pXheM7o63yH8j/as1W8eMNshnFgbixrrw8rzEYJJUeN1DRyKyOpvqrAgi4sRcHcEEbgg2qVtNLRaOYS9IvXts+Y/ty9mOI4VxI4CZ5p1mzyYCQ52fFwMbgKFv3mIhylMQiC4YK+REmhLft9DXjWpF4+MeU/fD8Zr6E6V+2fhPsVzGVUEg9RffXVSN9wdLbgjYWru87ycZ8oO1zmG11AJ520voSBqNOekQri+JmVhDDrb7728KD9PhtvyuaosL2edspOFukqkkK6LKt9JYmzCRelzdWUnQMqk7a64gdm4fiCyIkiNmSRVdGHNWAZT8QQaNhyPQKStUCkrUCkrVAnMaYCctQLyUC0lAtJQAY0F5o1dWDMRqZDKNTIMjUyCBqgIr0HOfv68Phk4JEZHyzR8QwrYVf/AFZGWWOZD/KuFeeYnkYR6HnfwahwbFirWVb8rnqep+NZRJ4GAkjqOd/ytbT8qCdFlXkfz02HzPIKdvhWlEEuu+otz69Te9zpzvYDbw2A/cg2tvY2Gv5DXlbX49ABCF41JoB0fz1ADDa/5j8xWbKmOB4ja+o5G3rYW8rKCdQL8raWBsaTXA1sbWHpYDcb3BUi3TzrQxZ7b2HMjQbk620I/FqbnT0oGoZdhfmANd9hpbz+YbpaxDyaW3PTe+3Lz136sTrbQFuIR3s6/ejNxa+qkeJOtmW5FzusZ1rMqNA4IVgw2zLbYgk5Ty1Jv/LcNox+7qJQriYb2Ntc1ttOoNgRc2FiNTYC9hoZKQ1rjzvE2HxURyzYaWKWN7A5JIpBLA5sR9yZQQBYE5t9a5XrmN+HWlprOY55h2P2Q94bD8VhR5EVZSBmH4kcbjezDN6G3SvzGtp305xPD9302rp61cxO/k3Pg+MJ8WVLcioyE+tr6145h2tPb4tiw/aQIyt8COo/ras4cpnMNxw8mYZl1DC9cZrPg61tGMSf4bi7eE/D+tXOWZjE5bDhJaQzbBLtvwp8ThpIop5cNKynu5onZCr20D5SM8TfddCCCNRZ0jdfd0vUzo37vDxjzh5NfQjUrifg457c+xbHcW4HiuKJhpJeM8Fx8+Dx0Sj/AKviWDhw2FlIMmUvicbhElvBMxlkxWHXJmmY4Yp+wm8TEWpvExl+T16dtsTGJ8XI3EInfu1ieySoJBLY/uXAZWUHmwYDXRW030rTxprhfD0hTKg1G5JuWYm12O5PO/S9aAuLcRvFKCdtf/aL+tx8/wA6g7C9hXEGfhWFLXuqumu9lkYKPgLD4VWobvI1FKyNVCsjVApKayFJKoWkNQKyUC8lAtJQAagvBDW2DMbUB0egPG9ATNQZq9Bwf79HtVGKx8XC4dY+HAvOwJ8WLnRD3drW/wCngy+IXu+IkXwmI5uFp3a4hz1gMPb6H9f0/wAUhE/gEsL8zfS3wOmgGp8j61uFyYDEka/p6jy+X57CeIJGl7Dz0Hn8d+fpfn+JJKQw4sCW+trAjYbc9dOt8tGqdo8aMyWO72PrYnTbpuALHpa5xZUnwWTb1ve9z5ctNeW7Gw3qwNrwklx+gG/Ty81uORU9BWwd35g/HbcXGn5i467i14Py87fR57aa2t0Jy9anDOD8ElxtfQHfTrueXO9zoW6a3KmBNexvY76lb3ve/re9ydLg62johONsjhVtla7JqBZibyxgW3P70EXJVpB4ApvIkOSWIHXXW3psLjnrckLcj7zXtVhF8RwudGjPO69bH+Lbla+lybaZQdM4ycNR7A9m5pJwcPM0E3fpAcrlT3k0cow6yKGAkzyRuiKcxZ1AVXbKjZjTi9ZiYeql5rOYlcnZv2u8QwRCYwPoSokAMisV38IFyw5qgz7/ALJAK+RrdFE71fb0evxtf9Vzdm/bbh8Qo8Ub8iUOoPmDz8tDXy76Fq8w+tTUpfesrS7NdscoXIxCnUXBtXmmuG5jKxeE9pVktdVLDW4Nr/Css5nzS8fHVG4YefKsTOG8TLN+LL103v063rnLrWFpdjuGd3AtxZ5LyyC1jmkACg/zJEscZ80r9r0WnOno1ieef13fi+s1I1Na0xxx+j4/+0eKM8Q4hGgUIuPxqxW2QLiJAoFrWTKFFgLWy72FfStvL5ky0yefLcEWI01/DppfXe/P461zaLQYLP4T906uf5cwJ3/isU9WO1tIjrX2A8eR8CIBYSQM5ZeZSR2dGA6C5TyKj+IVuViViu1TLRaRqBaU1ArKagVkNAu9Au9AvIaBWSgAaC7EatsGEegOjUBlegIHoMu/Cgsxsqglj0A1J+VSVfJXE8WbFSzYthZ8XPNiiDrZsTK87DYXs0h15gV56k8n4cPa5P8Af/bkNbD862GIbk+n5bG3y5DrzFrA5AL89dh/k/23AHkaqnkjAIGvQ2/tt0+fnYDAHFMZlBA0OwtfqPK+36cuVGjcbxPijTTQs3yuv5ZthpvzvXKxCd4ZibW8tv67nn6elWFbfw+UEed9T8djvoL2tyuP4TXSBIZj58uXxvbc8+e5I1zi7CB/aRYeXK9h08+el7/w7WuYGYMTpcHkdTz531O3P0zA7aA4mO8Oun81r2563vci3xt/O1yB4qzKQHAtYq1z4WW5GhtcGxB11Gc8xZIxgxZdToRfUqdSGX7wbncHQHS5OlgBRQZcQCd9Da2268uljY7A3A0ubmicvPZrxb7PxVVYqseIkwc1yQpzQYuN28TeHKcM2NDq9lYMASBc1rT2tMecfvHHzdY4djcf7CxS94JIwR9w5hz/AAq3ekf+EeKOuf8AY4rxBaTDtlzl7U/Yr3LNLBdCpJJBZSptsWIDoba2nUNr+8O542rl0ifFXHs+96rG8LxDYbGA4jC5gMzA99CCALi2kyg683OvjcgJXy9bpYtvXaXt0eutScX3jz8Ydvezr2tw4hY2OTK4DRSqQVZSLggjqNehr4t6TWcS/RxEXjurK0x2uTbc2va91YdVPXyrz2arTDYfZxw5cbiCcrdxhyGnJHhZ948ODsxbR5FF7RCzZe+jLe3oOm9dqd0x+GN59vlDydf1HqNPtj807R7I8Z+nt9y0vaT24Xh+AxmOYX+y4abEZds7ojMiC/N3yqL8zX7KsZl+Mnh8ZDiGDFmYuxOZ3a2ZmOrMbaXckknz9BWp5cxMZgBIAw3A1/nA66jxDTnqNNcqipLOUJiO0UUWhIGut9+QOlx0I2GnQViWlk+yf2m4aLFQusoUX7uQEgAxPZSb/wAhyvbnkHodZZ4l1c0nx6EbEdR5VnDqBI1QLSGgVkNAu5oAOaBeSgXegWkoAGgudHrbBhHoDI1AYPQEV6K0721dpDhOEcTxCkB0wWIERO3fSRmKG+oveV0Fhqb1i/Cxy+aGGbKttrbfDT5VzhDMLE79R1H9B+WvrVEhGLbfDb+23lb5feIg3g3uL6ncafPc+nLyJOoqtHHxFhbTS9tCPUadfLT5mtJMta4hi2Y6nbT6O3W9YlGonxTMegA+O56nbL9WrnPLfg2Lh5O35a7eYBHmBfz22pBhtHCsWRbXXz+X1fW2b49IRNRSG2h0ty3Gh+Y316jzrSPJpLenrbyIHTQ2v5J8JkeRTa9ee+p2P5m+mv3vWoGll5L10257efNb89DVAZMZr+fUai+2mpGUG/X5EJ/8yKTKp+7LcX0t3sYuL6HRxmXkLhbakFZ4qky2+um+lzbTqNfIbAnkdSKNW7bYh4kXEoWDQMXBVnQ2Iv4XjKOpNgA0bq4vdWUjRnExPtarL6OtOrFXWwXu86EaAJIAWZLKQIjdSxjSXCnXvIMMwuOtufv7++XWvDV+2nC+8S9gbKTtqsZ2tkZnRCbAGNpsNcGxTWOsOtXz29r3A1HEsWotbKjC1rXI5FdDqN8qnqt7k+e0bsW5WH7Du1MWBxa4LFmX7Hi2z4d0lC91Mx1itIkiFZbl1A7s97cZmM2nKem09WcW2z4x83fp+r1NH8vHlLvD2edmMC5Uo+PmYAt3Ly4dYWW1tHWFZQbsDYSgkAiy1f8A8fTzvMzD3W9LasxiIrHt3+c4Xn2X7VpAEjZEiUXCJDogDEsSyhjmc3uXKgsxJJcnNX1K6FaV7aRiHyL3tee605lU3v8APtHSPg8WDjcd5xCdMyhrOMPhyJma25UyiGMjQEOd9jnGP4cZl86Zt/hb6059PnsKwwNhMXb+3T0+tflVymELxrsnDMxkyZnO4vvzLBds/X+Le173zMZSERJ7OEYgxs0R662v6fX61jDS9/dq9oGJgmHCcY+dHRnwMh3BRS7wA/wNGGkRfwFHFyHULpYl0e7VGi8jUCzmgXegBIaADmgXkoF3oAGguFTW2B43oDo9AUPQZq9GlB++12jEXBlg1LYzGYeMAclgLYssdvCHgjX1da5XOIcQQxHc/X1+VRk2lgdvTf8AyOfOipGCP11t8tP6+R9aqpiOCwGoPO/zt/gD89KqoziOKuLdNPS31uelSUa/xLEZQWJ0CknnYAa89vIf7yZwjV+CsSMx3Y5j8f7aAfCuUNy2fCj+lumvr/b+w0JvB336j65WtfXb52AqomcJidr+d7/058rW5W12rcBszAi1uR+e+229tzzHI3AAEnppvc9OegH8PXnRDMcult+ltbakDff7w+IqD9IddbWvcabfittt921+fpcVEXx7hveRso0bdSNwyHPmHmGCnbTyqTGSDvAuMCaJX0Vgcsi8lYbqBuR+IX5H1NKzsoPHsKJI5UIBzIQAddQLi/loPog1bRmCNpdl+wntUMZwbh02Ysy4eOCVrkscThR9lYkghjM5iEitmhxTLYq+LUlRqJzEff397O9W4YuzR23zFgABe728WUKEJkAuG7oQ4gADvIJf3lWW4fPz20Q5eM4kcmSO33TsCNwATa34lBFee3KX5e8f4SJsFEwPjWOMhgTcOoABDA3Uqy7ixDKT0reM1cPF0J7p3t4hxDnh+M/+caNGw5LFI8SuUurJlZcsrqylowLMR4R4kQe7T1e6O3xV16vaHCKqSyBcM0YDKAgVpDffMBkZRYeJ2kIINiczW5aGnq1tM3nb3t2mPBxT7xftTXiXEWdZM8MKCOPxXQm+ZmT+U+EZhbMUBBIsTrUtEziPBxlVEkvp/vt8LddK5MsQ310/x/WgJnt/T5/X1rVQrxiSbMjxSxxjZ1eMNmO4KnMpF9QR5LYdcysNj7M9tVSfDNif2TQzxSJMFKqcrXdRmFrSIGRgpsVPIi5uU9zr2HFq6q6MHRgGV1IKsp2ZSNCD1FZdGLtQAc0C70AHoF5DQAc0AHoANQW4j1pgZWqg8clBkZKNCJJRXHPvzdog+NwGFDH9hhZZ3XXKTi5hHGTyLKMG/mA/8xrjO8k8Odo09R8v6/2owbw0N/66H529dOh/KipiGK2+mnIdfl0213O9VWHEMTa4B5W33vt/QEn9NhKN5En6+vOiNV7aYz9k9jq1lHnci/Xlf6353nZqvKO4G2gHl9fX0MQ02rhzcv1/Py8uY/rtlMwW0I9OvwvzPkNq0sJHDuAbX36giw13+G/S3LKb1DBb5jX9Rt/TXW/UXDDDSDb019B12vcfmOlqB2NRy8uW/T+h5bfGgKdB8dR8yOpP4Rt+tzUwwynUDY6NvYjnbmSSSLfQI1VZzhcTc/upyEfkFk2RhuAB91m2F738ArnxLbaZF1067C2hO3lcg+tr+h7MLg9z3j5WPifD2v8AsJ0xEdzde5xKNG6AZWPdo+HErq8c0JM2ZliKmasV2zD0V3X+OJA5rnQpcgkaxjUFsxcNGCxsztPAt/DiMNetOmHEHvNx5ONBuTwqLnfS2+a7/iJGZpFsfC7A6cbcpd+7NOHwyLyBkU87XkLAkeYa3/j610rw4Ty0/wBhsWHxXEsBh58UmCaOd4vtEkixL3eWTuGWVioEsUvdxqCysAsBTMYyFxS0R74OHR3tZ94aeXBLgGfvMUrvFicUkgePERxeEGIqWIMx/fnNlGRkUHvXMHuvrd1cR8WZc9TcSPPXmdrn415ssP0HGjf9P1/z9asiSTiQ57f7X+vX1rWQ1FjFIuTYa6+R8vQVcjOLGpNdSgeJgQ2YAq3MaEHNYgG/kKIBJ2cdVYQsWjN80D/tAAfxRZic630aFzcj7rqclnaZbZ7E/aDieH4lIL95gJWCyws5Y4Znay4mBmN2gJ1YHxgBlYM6g1iG3XT1VAegA1ACQ0C7mgA9AF6ABoLXVq0wKjVQVXoM+8o0yV6K+fnvJceOJ47jjcMsLx4WO3JYIkWRTvqMScRf5cq4eJLQYo/86Kf7nbrvb1qsJbBQ9fXp6fX61Yah7isZb6t9Dy/PekoUGp/x9DXQ/K3K4fsWnhO2m9j8tRby69fWiv8AtDJncR8h4vO9tPU2PnXG28t1ZYFLMB5/Xn9elRWy8Mnubc/r1H68+taZbFEvP53305aDrsPntWgwnl18vL879f71QUa8x/TUcunrv8jYPLanrfmD5G+tuo+N6BnD2B8vh5dOfmT+H1FUNxz6cuu/Sx/I5tNPu0kNAjQi42Oo0FgNudgD/wCTEaaXqoiO1XCBJG62t620J1Kje7E3JA2PzObRkhF9kOMmSMpJ+8hOVr2BK65ZOt2AyHc5gxsLi6k55WYbp7IOKHDccg5Li4J8O2lwGRRiA51QKFOHS0hZQgLEvCP20bi3vdKS6oKFS5LEMLtbbKTcBzfJZjsHfuXObTFPfK2npcae8piS2LicXPdyZSLWPiNibZVtcm98iXO5kPirjblizLsPP+yfoJmPPQBYeQPma3R55U99niTEBphmjuSRyJO2cjXJc+IDcabEmuWIzuZbtJjy12uLWGulgANLcgALWA0AFdnPJHE8SK5LgftAWXxxZrA21QPmQ6bOqtqptZ1Jnd4Lh7BjuVxmF9jm8um+u368qkm45Tub+l/SrlB8K4ZgHvk5gH7xtsfIC/qfiKuRtEeKXL4bWvbT9PrqPjpR8Nj7EHp9f4+tdZZmMontRKYnWe5+zynI+98POwOWUEWPdzWCuh8JYa+KRCvO205Wvk7sinDKrA3DAMCNiGFwQfMG9Vti5oAtQLyUAHNAGSgXegCaC0w1bYEVqAgegyDUbfpcSqgsxsqgsx6KBcn5CpI+Yc/EziJpcQy5WxM02JZTrlfESNMyk+TORXCIZlIQIAMzeoHwvtz5cq2MhjLk/X5X5dL9d+QYHAsTtfp9fl/fakIaTBEeW3wt9en9dLgljomNlAJZmVVVQWdnchURVF2Z2JCqigszEAA6Xiq4ilzuZRsWuP8ATfw/IWrz87uiXW2hG/P6t8edVEq8ZFmG31+osfO9utEhsfBOIBtDz5X56edyT+l+tbiUSmJwhG23X8/0N9PPproKtJbf++3P4f32uLBl9qHTWw5Db876BuZvp5UHiyaj8/q3+rf8qB2KX6vv9WPLn6VRIRzk21238t7NrfbxHTqtrVYGUhtrta2/LkABvmPmDy8xQV7xpzhsQuIjzFTo4GmZCbMOXqv8wHmK4ztOVhPcT4sIThcahBXDYjD4pSATdEdGuLZSDYAgqVZSAQysARu0+K1l2VFxYXVwRr9wg6DOFsVK92FLgkjIYDIDomMHibb1xw5C9uU2fGEW0VzodNRqbCwCkHS2SIi2qCxFcLcsXD7HXXDSE/iMhUX2GUDzAJcHfTW+++6vPKuO0nBze/8AfpWbQkS1/D41orqblOan1ubX68xsfK96xnDUw2bgeLLgxtIDh3MLzlwjyOsLS93DG0iyNGoEr6pa9wWRyEswDd2qtZcxXTLnINvLQLz2vc+ddYcpNLP51pEjgRufn5/H4fVzVDz4mxAHn/n4bfRrQPFjaBvFos0DwOfDIAL/AMLDVWF9irWYelWd4we11b7EMRIeFYQSWLxI0NxsVhkeNCP/AAVdOVthtUbbsxoAsaADmgA9ABqALmgCTQWeDW2GeagyDUWGatRWg+8B2i+zcF4jJmKM+HOHRlvmD4tlwqFSNQQ0wIPK19LVi3CuBMLZRmPwXr5+l+XPXlesMFsXxVj9fX+PKmVeQY1wb2O/18SPremRtHDuKFt139fL8vr8VayHMXNbny5+fPl/TXXw6VVbX7u/BvtfHMEpsUw3e41wwvf7OtoiARa6YqXDuDYEFb8gakTuNH9ufYX7DxjiOHAtG05xMOlgYcX+3UKB+GN3kgBHOI9DXHGNm5aEiEacvrblyoy2PBRXW23Q8rdDyI5Dp8AKqwzw8BRrXtr6D1F99999NjSIVtuGlBUdTv8AW45Hy30sbdISS+Kw/Qem3kLa328vncLeGETI1je3I7fO3la9tL218qIxbEDT+v1/fc0Q9gccDof6f3PRT6X5GipSG2lj5gfActTppcW5GgbBBFtjbQ+X99rk6fLTQiu0PCO8jIudb75eQ8wpOunhB/SszGYGk9nJ8yyYGW9iHyE6WB++g03Grjf8Q0sK51/4tT5usvZhxozcPwsj5s8UZgcksbPE5gc5mOYiZoi1y6mXNquObPbpHD01nZzd7TZg2OlA2S49DfUDQZQLWyjLawBjiIyjlLF5TWKi7nDpH+IlVNm9Wfw8iWzbi/iP/l0hwlA4rDBvq/19bVplpXaHgd7la5WhqJbN7FfY/PxOPiH2Z/8AqcHHh5YoGKiPEd40okiLN9yQrH+yYsEz6MVVzJHKwsoCSUgsrKyMrFXRwVdHUlWVlaxV1YFWVgCrXBAOldIlzkxC35VUSUWJsB9H7rbUB5G5n1+e35W/L46GKz2oJIYiyE/wgn4Afp9a1R2T7JcH3fDMCDcFsOkpB3Bm/bEHfbPa19LUbbSxoAuaADmgC5oAuaAD0ASaCzA1bYZ5qD3NRYEQ0ac/++fx3JgMLhwwBnxed05vFBFITp0WaSAk+nWudklyG8JYgfWtrfDbSsMp/hXZ29ri56AE6jz0H6j9DrCth/5XEo1At6Dl0Gt+o0Ohta4JqqheKcahj0UC+u39N9LGwvr6agso1efjRck30Otr/Q+uVQdB+5FGG4hjZCBmXBKoa2oEmIjLAeRMak7XyrvYWtfE8Ur78fZYCbh2PAAzrJgZm1uSt8RhRbbQHGEtp+HfS2Lct+DmCSDW9vP5VlErw1NLG9jp/X6vpr60WB58SRzJ+WvUaAnT6teqcH+E47l/b601tyv1JNahE6CCB0t8L2P9fgBbfK1aVG8Q4bz9NtBtyv5W+H+g1EQ2IwhHL6/Tb60FREdIzKedv6dfrz6VFSPDeNnQbf7/AF8z1vVyifwHEARuNCOfXnz1HruSbVpUkWuLDnp1vbrbU8tL35HegrrtpwsxyLMmhVgwtyO40+YI9eorjaMbquD2M9tB9nxSeHxgTpYePOckGIub6giOBQqm5Fw0eJXIkPSJzGXTTnfCuYIftONlfdVe5Nx+HRVvsLt+HTQMAsYGWPnG8reUpxacvJbUiMW1/iazNfbW9trW6aa9XIjimsB5/H6+W96IhsZHccvr68qiLx9xrC5cTxY//wAWC/N8Xb/6azXmWs7Ce9p7FGV34vhEJRhfiEa3JRlAVcWF/wDTKgLPb7hCyEWbESLq0Y3RzNFMR6VEMJiL2H1vTLKWfFXrWR4zVRt3YLsucfiIsILjvsyyMu6RZT3kgOoBVbkXFi2UfiFVXcKRBQFUWVQAANgALAfAaUaYPQCagC9AF6ALmgBIaABoLKBrbDPNQfgaNQIrUHGPvjY+SXi8EAF1gwMRQWvZ55pzKf8AyWKEEfyCuFuVnhWnDsAqANKwUAC9iPK4+W4+dr2rTJLintDRfDH4rW+7ytoQPL86ncrXcV2hxcxNlOvX1ufzN6zMypB+CYnViL/H9Pr9KzuuwP2p1++LHp8egq5TDqP3CmzYnijfw4fCL8WlxB//AA+rmulZ8Ewvb3nOzH2rgmNAF3w6rjUsMxvhWEsgUfxPAJox/r57UtwsOEUhuvz+v01rAz4ZJlJBFwNdfn1Fr6fWlBsy8OEi7a6aaG1z4R8rkjrbyNaENNgCp02+f5X16X57aWNTGBJ8O4lewJ6bc/1v+Qv/AKjWoMpTEG4v6em4ubkiw0t5cvvGqFWiB5i/r5kcgB9H+WwL43hQI156fH1uT9HqLyRrvEeCEagfoB8fz9SGqYQnBjmS1/r6uR86zEjaeFcdBtc6/nt6/RJ9K3Eqd4thBKhBNwQeXXXl67EfKrI0/s3xdsHMyn7rK+4B+8hUjY6EWNspF1sVcFlPGNtm4nG7c+FxiDD5t2bxEjLmaRzz1ZgNbXB0UAZm5biEmckQ2VddSbnzJa9ybc21At51pCTJmP1/tvyoj2fCgWH16UZlfnuccNytxST+P7Cn/s+1sf8A7g/KkLDpFv8ABB2I6Ecwa0rln2x+6MWZsTwfIpYlpMA7BI9iT9kkIyxknQQSlYlv4ZIVVY65zXyHNHGOC4jCydzicPLh5dfBKhRjlNiUzAd4t9pI86HkxFZyYDhnrWWUhhrsVUBmZiFVVUs7sxsqIqgszsSFVVBZiQACTVR2L7BvZEeHQmbEKPts6gOLhvs8VwwgDAlS5IDSshKllVQXESu2oaxhabGqoLmgExoBPQBc0AHNAFzQBagscNW2GQNBkDUVmDVVxh73krR8YUjQScPwzX5/vsWhA8rIDp1rhPMrKscBgosRH4ySy3ul7X87bnTmfy1rUYlkZezMYt+zC+drnlrbTpsNbbVrAOCkV8y6AXFhe+2nLz562brQy1/Gz42XVAsEf8wJPl63tfpe/nWZiZ4VEz9iXfV5HZjzFgPgP0309axNFizrn3G+whwuGx+JYuTiJ4YVzDKMmGjL3W4u13xTqWBteO1gVa+617TOXTMkIcFGAZXBVgdQVYWYHyIJBqyQ+ZHZ5VaIZCWQLZC33io2J28RW17Ab/hrnXgFaK/3dwDc8zfnz38vTpSVhJcB4pYlWNtdCRYDqDt6ZiTperA2aTAq+u+x/W9xa9t77AeLpWxDYrhBXbzvpre53/rvqD8IhjBvfQ768tdvQ6/PnbcUaSM+EBF+fxHQ9bHXT1AHIkWUKo2wI6aDpy6dRv0HmCgYNg7/AJi2vKx8zbXy0t/HpREY7gN7238unwB5679d73OZhlAz8OdDp/n4/XI1BKcK43yb6/T6vViTJDtLgM8sJAuC4XbWxYHn5X0ty265ssNk4txFSQoNxGNTb8R8hpmC2G7aeYIqkoWWQn+30f7fDSiHMM458vr65C1VX4i5+vrrRmXSHumKBDjuplgJ9Cj2/MGtLC9yaKwagi+0HZ+DFRNDiYY54m3jlQOtxYggEaMCAQwsykAgggGgortH7nWEdy2FxU2GUkHupFGKRRYCyMzxTdTeWSVrne2lZ7Ubr7M/YPguGHvUz4jE2t38wW8YIsVhRQFiBBILeOQgkGQjSrEEQsRjVUFqAT0AiaATmgC9ABqALGgEaCxAa2yzBojK9GssgaK4999HBf8A6hhH5Pggg/8A6sRKT/8AdWuFuRRMCstspII5jQ/l/epvDKb4ZxmVbX15Xt8f151vI2XCyBwMyjTqNb8iPPbbyreQcwowBIB15m9r89dr9BmJ+VURcfEi+KhwUMeeWaaKGPpnkIUE5bkRpfM5GqqGNha1Yzvgd+9l+z0WEw8WGhFo4kCjSxY7s7W3eRyzsebMaqpaNtR6iivl/wBjVMLGBt0Jiff7yNkYdfvAjbSuNVltsuBs+bTxDXWx9TY9Og15jWtyiM4lwwjxJ5EH12Ggvf0FwOtZmFykOAcfI8DHX6sbbed9tedyasSYbRHZl63Gm1txz5i4v/cXrYVkwFjceuulreuug0+HIgioosOH5DS2l7A2tcbEknfly65jVSQ5MLfkfO/Xa+nn000J2UUGIw5Bt5/1uDYban4XPQVUZSQHn5WuOYtbl12vbl/CRQKS4EMNf97W2sDyt15edBE4vs3f7th8v11003O4B61nCIyXhjRywiRgQGDAc7sQinS/OQG/8QG/PNtmoGxPD2Sd0AQrljcMjAqe8GazP/GL3IazAqeoJxWd1k6mCBA05A/pfXyufmPMjtEMsX4YRr9eXwt5Db0pgDQHe3OjMuhPdSksccvVcM3yM4P6iqsL/JorEmgExoBtQYFqAbGgC1AJjQCegC9AFjQCagA9AFqD/9k=" alt="洪巍會計師" style="width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:center top;border:2px solid #e8f5ee;display:block"/>
+      </div>
+
+      <!-- Info -->
+      <div style="flex:1;min-width:220px">
+        <div style="font-size:11px;font-weight:600;color:#40916c;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">關於作者</div>
+        <div style="font-size:20px;font-weight:700;color:#1c1c2e;margin-bottom:2px">洪巍 會計師 CPA</div>
+        <div style="font-size:13px;color:#40916c;font-weight:500;margin-bottom:12px">HYTC 會計師事務所 合夥人 ｜ 臺美會計師協會 會長</div>
+
+        <p style="font-size:13.5px;color:#4a4a6a;line-height:1.75;margin:0 0 16px">
+          服務多間大型集團、上市上櫃美國企業，深耕加州洛杉磯地區稅務規劃與財務諮詢。現任臺美會計師協會會長，致力於為華人社群提供專業、清晰的稅務資訊。
+        </p>
+
+        <!-- Contact & Social -->
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <a href="tel:6262921877" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#1c1c2e;text-decoration:none;background:#f5f4ef;padding:7px 14px;border-radius:8px;border:1px solid #e0dfd8">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .9h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            (626) 292-1877
+          </a>
+          <a href="mailto:whung@hytccpa.com" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#1c1c2e;text-decoration:none;background:#f5f4ef;padding:7px 14px;border-radius:8px;border:1px solid #e0dfd8">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+            whung@hytccpa.com
+          </a>
+          <a href="https://www.facebook.com/FedTaxNote" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#1d4e89;text-decoration:none;background:#e8f0fa;padding:7px 14px;border-radius:8px;border:1px solid #b5d4f4">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+            FedTaxNote
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px;font-size:11.5px;color:#b4b2a9;line-height:1.65">
+      本工具資訊僅供參考，不構成法律或稅務建議。法規隨時可能更新，重要決策請諮詢持照財務顧問（CFP）或稅務師（CPA）。<br>
+      © 2026 洪巍會計師 · HYTC CPA
+    </div>
+  </div>
+
+</body></html>
